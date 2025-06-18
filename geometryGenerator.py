@@ -44,14 +44,18 @@ normal_aspect_ratio = 2.5 # Maximum aspect ratio for normal buildings
 extreme_chance = 0.15 # Probability for extreme building
 extreme_aspect_ratio = 5.0 # Maximum aspect ratio for extreme buildings
 
+# Circular buildings
+circle_chance = 0.05 # Probability for circular building
+circle_resolution = 32 # Circumferential resolution
+
+# Height for normal, extreme, and circular building
+min_height, max_height = 5, 80 
+
 # Towers
 tower_chance = 0.07 # Probability for tower
 tower_min_size, tower_max_size = 50, 100 # Range of tower edge length
 tower_min_height, tower_max_height = 80, 200 # Range of tower height
-
-# Circular buildings
-circle_chance = 0.05 # Probability for circular building
-circle_resolution = 32 # Circumferential resolution
+tower_max_aspect_ratio = 1.5 # Maximum aspect ratio for towers
 
 # Roads
 road_width = 10 # Road size
@@ -266,7 +270,7 @@ def random_building_footprint():
     shape = 'rect'
     if np.random.rand() < circle_chance:
         diameter = np.random.uniform(min_size, max_size)
-        height = np.random.uniform(5, 80)
+        height = np.random.uniform(min_height, max_height)
         shape = 'circle'
         return diameter, diameter, height, shape
 
@@ -274,7 +278,7 @@ def random_building_footprint():
         for _ in range(100):
             w = np.random.uniform(tower_min_size, tower_max_size)
             h = np.random.uniform(tower_min_size, tower_max_size)
-            if max(w / h, h / w) <= 1.5:
+            if max(w / h, h / w) <= tower_max_aspect_ratio:
                 height = np.random.uniform(tower_min_height, tower_max_height)
                 return w, h, height, shape
     else:
@@ -284,7 +288,7 @@ def random_building_footprint():
             aspect = max(w / h, h / w)
             limit = extreme_aspect_ratio if np.random.rand() < extreme_chance else normal_aspect_ratio
             if aspect <= limit:
-                height = np.random.uniform(5, 80)
+                height = np.random.uniform(min_height, max_height)
                 return w, h, height, shape
     raise ValueError("Couldn't generate a valid building footprint.")
 
@@ -402,8 +406,10 @@ metadata = {
         "extreme_max": extreme_aspect_ratio
     },
     "building_size_range": [min_size, max_size],
+    "building_height_range": [min_height, max_height],
     "tower_size_range": [tower_min_size, tower_max_size],
     "tower_height_range": [tower_min_height, tower_max_height],
+    "tower_max_aspect_ratio": tower_max_aspect_ratio,
     "circle_resolution": circle_resolution,
     "road_width": road_width,
     "vertical_road_count": num_vertical_roads,
