@@ -12,12 +12,12 @@ import sys
 # Parts of the geometry
 # Inlet - I
 # Outlet - II
-# Wall left - III
-# Wall right - IV
-# Wall top - V
-# Wall bottom front (slip) - VI
-# Wall bottom back (slip) - VII
-# Wall bottom center (no-slip) - VIII
+# Left - III
+# Right - IV
+# Top - V
+# Bottom front - VI
+# Bottom back - VII
+# Bottom center - VIII
 
 #--- User input ---
 if len(sys.argv) < 2:
@@ -32,33 +32,39 @@ z_min, z_max = -350, 350 # Global z range
 x_min_VIII, x_max_VIII = -300, 300 # x range for wall bottom center - VIII
 
 # Safety distances
-margin_x = 100 # Minimum distance to wall bottom front (slip) - VI (after rotation)
-margin_y = 150 # Minimum distance to wall left - III, and wall right - IV (after rotation)
-min_building_distance = 5  # Minimum distance between building surfaces
+sd_x = 100 # Minimum distance to wall bottom front (slip) - VI (after rotation)
+sd_y = 150 # Minimum distance to wall left - III, and wall right - IV (after rotation)
+md = 5  # Minimum distance between building surfaces
 
-# Normal buildings
-min_size, max_size = 10, 80 # Range of normal building edge length
-normal_aspect_ratio = 2.5 # Maximum aspect ratio for normal buildings
+# Number of buildings
+b_min, b_max = 2, 16
+
+# Rectangular buildings
+l_min, l_max = 10, 80 # Range of rectangular building edge length
+a_max = 2.5 # Maximum aspect ratio for normal buildings
 
 # Extreme buildings
-extreme_chance = 0.15 # Probability for extreme building
-extreme_aspect_ratio = 5.0 # Maximum aspect ratio for extreme buildings
+E = 0.15 # Probability for extreme building
+e_max = 5.0 # Maximum aspect ratio for extreme buildings
 
 # Circular buildings
-circle_chance = 0.05 # Probability for circular building
-circle_resolution = 32 # Circumferential resolution
+C = 0.05 # Probability for circular building
+d_min, d_max = 10, 80 # Range of circular building diameter
+phi = 32 # Circumferential resolution
 
 # Height for normal, extreme, and circular building
-min_height, max_height = 5, 80 
+h_min, h_max = 5, 80 
 
 # Towers
-tower_chance = 0.07 # Probability for tower
-tower_min_size, tower_max_size = 50, 100 # Range of tower edge length
-tower_min_height, tower_max_height = 80, 200 # Range of tower height
-tower_max_aspect_ratio = 1.5 # Maximum aspect ratio for towers
+T = 0.07 # Probability for tower
+t_min, t_max = 50, 100 # Range of tower edge length
+s_min, s_max = 80, 200 # Range of tower height
+w_max = 1.5 # Maximum aspect ratio for towers
 
 # Roads
-road_width = 10 # Road size
+r = 10 # Road size
+rh_min, rh_max = 3, 8 # Range of the number of horizontal roads
+rv_min, rv_max = 3, 8 # Range of the number of vertical roads
 
 ######################################
 # Inlet - I 
@@ -107,7 +113,7 @@ plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 plane.export('outlet.stl', file_type='stl_ascii')
 
 ######################################
-# Wall left - III 
+# Left - III 
 ######################################
 # Define the four corner vertices of the rectangle at x = 0
 vertices = np.array([
@@ -127,10 +133,10 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('wall_left.stl', file_type='stl_ascii')
+plane.export('left.stl', file_type='stl_ascii')
 
 ######################################
-# Wall right - IV
+# Right - IV
 ######################################
 # Define the four corner vertices of the rectangle at x = 0
 vertices = np.array([
@@ -150,10 +156,10 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('wall_right.stl', file_type='stl_ascii')
+plane.export('right.stl', file_type='stl_ascii')
 
 ######################################
-# Wall top - V
+# Top - V
 ######################################
 # Define the four corner vertices of the rectangle at x = 0
 vertices = np.array([
@@ -173,10 +179,10 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('wall_top.stl', file_type='stl_ascii')
+plane.export('top.stl', file_type='stl_ascii')
 
 ######################################
-# Wall bottom front (slip) - VI
+# Bottom front - VI
 ######################################
 # Define the four corner vertices of the rectangle at x = 0
 vertices = np.array([
@@ -196,10 +202,10 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('wall_bottom_front.stl', file_type='stl_ascii')
+plane.export('bottom_front.stl', file_type='stl_ascii')
 
 ######################################
-# Wall bottom back (slip) - VII
+# Bottom back - VII
 ######################################
 # Define the four corner vertices of the rectangle at x = 0
 vertices = np.array([
@@ -219,7 +225,7 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('wall_bottom_back.stl', file_type='stl_ascii')
+plane.export('bottom_back.stl', file_type='stl_ascii')
 
 ######################################
 # Wall bottom center (no-slip) - VIII 
@@ -242,58 +248,58 @@ outer = Polygon([
 ])
 
 # --- 3. Generate random road network ---
-def generate_random_roads(x_min_VIII, x_max_VIII, y_min, y_max, road_width):
+def generate_random_roads(x_min_VIII, x_max_VIII, y_min, y_max, r):
     global num_vertical_roads, num_horizontal_roads
-    num_vertical_roads = np.random.randint(3, 8)
-    num_horizontal_roads = np.random.randint(3, 8)
+    num_vertical_roads = np.random.randint(rv_min, rv_max)
+    num_horizontal_roads = np.random.randint(rh_min, rh_max)
 
-    vertical_positions = np.sort(np.random.uniform(x_min_VIII + margin_x, x_max_VIII - margin_x, num_vertical_roads))
-    horizontal_positions = np.sort(np.random.uniform(y_min + margin_y, y_max - margin_y, num_horizontal_roads))
+    vertical_positions = np.sort(np.random.uniform(x_min_VIII + sd_x, x_max_VIII - sd_x, num_vertical_roads))
+    horizontal_positions = np.sort(np.random.uniform(y_min + sd_y, y_max - sd_y, num_horizontal_roads))
 
     vertical_roads = [
-        LineString([[x, y_min], [x, y_max]]).buffer(road_width / 2)
+        LineString([[x, y_min], [x, y_max]]).buffer(r / 2)
         for x in vertical_positions
     ]
     horizontal_roads = [
-        LineString([[x_min_VIII, y], [x_max_VIII, y]]).buffer(road_width / 2)
+        LineString([[x_min_VIII, y], [x_max_VIII, y]]).buffer(r / 2)
         for y in horizontal_positions
     ]
 
     return vertical_roads + horizontal_roads
 
-roads = generate_random_roads(x_min_VIII, x_max_VIII, y_min, y_max, road_width)
+roads = generate_random_roads(x_min_VIII, x_max_VIII, y_min, y_max, r)
 rotated_roads = [rotate(road, angle_deg, origin=(0, 0)) for road in roads]
 road_union = unary_union(rotated_roads)
 
 # --- 4. Generate building footprints ---
 def random_building_footprint():
     shape = 'rect'
-    if np.random.rand() < circle_chance:
-        diameter = np.random.uniform(min_size, max_size)
-        height = np.random.uniform(min_height, max_height)
+    if np.random.rand() < C:
+        diameter = np.random.uniform(d_min, d_max)
+        height = np.random.uniform(h_min, h_max)
         shape = 'circle'
         return diameter, diameter, height, shape
 
-    if np.random.rand() < tower_chance:
+    if np.random.rand() < T:
         for _ in range(100):
-            w = np.random.uniform(tower_min_size, tower_max_size)
-            h = np.random.uniform(tower_min_size, tower_max_size)
-            if max(w / h, h / w) <= tower_max_aspect_ratio:
-                height = np.random.uniform(tower_min_height, tower_max_height)
+            w = np.random.uniform(t_min, t_max)
+            h = np.random.uniform(t_min, t_max)
+            if max(w / h, h / w) <= w_max:
+                height = np.random.uniform(s_min, s_max)
                 return w, h, height, shape
     else:
         for _ in range(100):
-            w = np.random.uniform(min_size, max_size)
-            h = np.random.uniform(min_size, max_size)
+            w = np.random.uniform(l_min, l_max)
+            h = np.random.uniform(l_min, l_max)
             aspect = max(w / h, h / w)
-            limit = extreme_aspect_ratio if np.random.rand() < extreme_chance else normal_aspect_ratio
+            limit = e_max if np.random.rand() < E else a_max
             if aspect <= limit:
-                height = np.random.uniform(min_height, max_height)
+                height = np.random.uniform(h_min, h_max)
                 return w, h, height, shape
     raise ValueError("Couldn't generate a valid building footprint.")
 
 # --- 5. Generate buildings ---
-num_buildings = np.random.randint(2, 13)
+num_buildings = np.random.randint(b_min, b_max)
 holes = []
 positions = []
 sizes = []
@@ -307,8 +313,8 @@ while len(holes) < num_buildings and attempts < max_attempts:
     attempts += 1
     w, h, height, shape = random_building_footprint()
     diag = np.sqrt(w**2 + h**2)
-    buffer_x = margin_x + diag / 2
-    buffer_y = margin_y + diag / 2
+    buffer_x = sd_x + diag / 2
+    buffer_y = sd_y + diag / 2
 
     x_range = (x_min_VIII + buffer_x, x_max_VIII - buffer_x)
     y_range = (y_min + buffer_y, y_max - buffer_y)
@@ -321,7 +327,7 @@ while len(holes) < num_buildings and attempts < max_attempts:
 
     if shape == 'circle':
         radius = w / 2
-        theta = np.linspace(0, 2 * np.pi, circle_resolution, endpoint=False)
+        theta = np.linspace(0, 2 * np.pi, phi , endpoint=False)
         circle_points = np.column_stack([np.cos(theta), np.sin(theta)]) * radius
         rotated_circle = circle_points @ R.T + rotated_pos
         hole_poly = Polygon(rotated_circle)
@@ -339,7 +345,7 @@ while len(holes) < num_buildings and attempts < max_attempts:
     if not outer.contains(hole_poly):
         continue
     
-    buffered_hole = hole_poly.buffer(min_building_distance)
+    buffered_hole = hole_poly.buffer(md)
     if any(buffered_hole.intersects(existing) for existing in holes):
        continue
     
@@ -370,7 +376,7 @@ cylinders = []
 for (w, h), height, pos, shape in zip(sizes, heights, positions, shapes):
     if shape == 'circle':
         radius = w / 2
-        building = trimesh.creation.cylinder(radius=radius, height=height, sections=circle_resolution)
+        building = trimesh.creation.cylinder(radius=radius, height=height, sections=phi)
     else:
         building = trimesh.creation.box(extents=(w, h, height))
 
@@ -394,30 +400,34 @@ metadata = {
     "sample_id": sample_id,
     "rotation_angle_deg": round(angle_deg, 2),
     "domain": {"x_min": x_min, "x_max": x_max, "y_min": y_min, "y_max": y_max},
-    "wall bottom center (no-slip) - VIII": {"x_min_VIII": x_min_VIII, "x_max_VIII": x_max_VIII},
-    "margin_x": margin_x,
-    "margin_y": margin_y,
+    "bounds_for_x_of_section_VIII": {"x_min_VIII": x_min_VIII, "x_max_VIII": x_max_VIII},
+    "safety_distance_x": sd_x,
+    "safety_distance_y": sd_y,
+    "min_building_distance": md,
+    "bounds_for_nr_of_buildings": [b_min, b_max],
     "building_count": len(cylinders),
-    "circle_chance": circle_chance,
-    "tower_chance": tower_chance,
-    "extreme_aspect_chance": extreme_chance,
-    "aspect_ratio_limits": {
-        "normal_max": normal_aspect_ratio,
-        "extreme_max": extreme_aspect_ratio
+    "rectangular_building_size_range": [l_min, l_max],
+    "extreme_aspect_chance": E,
+    "aspect_ratio_limits_rectangular_buildings": {
+        "normal_max": a_max,
+        "extreme_max": e_max
     },
-    "building_size_range": [min_size, max_size],
-    "building_height_range": [min_height, max_height],
-    "tower_size_range": [tower_min_size, tower_max_size],
-    "tower_height_range": [tower_min_height, tower_max_height],
-    "tower_max_aspect_ratio": tower_max_aspect_ratio,
-    "circle_resolution": circle_resolution,
-    "road_width": road_width,
+    "circle_chance": C,
+    "circular_building_size_range": [d_min, d_max],
+    "circle_resolution": phi,
+    "building_height_range": [h_min, h_max],
+    "tower_chance": T,
+    "tower_size_range": [t_min, t_max],
+    "tower_height_range": [s_min, s_max],
+    "tower_max_aspect_ratio": w_max,
+    "road_width": r,
+    "bounds_for_nr_of_horizontal_roads": [rh_min, rh_max],
+    "bounds_for_nr_of_vertical_roads": [rv_min, rv_max],
     "vertical_road_count": num_vertical_roads,
     "horizontal_road_count": num_horizontal_roads,
     "building_shapes": shapes,
     "building_sizes": sizes,
-    "building_heights": heights,
-    "min_building_distance": min_building_distance
+    "building_heights": heights
 }
 
 with open(f'{sample_id}_metadata.json', 'w') as f:
