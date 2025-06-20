@@ -8,6 +8,7 @@ import trimesh.exchange.stl
 import json
 import random
 import sys
+import os
 
 # Parts of the geometry
 # Inlet - I
@@ -23,6 +24,10 @@ import sys
 if len(sys.argv) < 2:
     raise ValueError("Missing required argument: sample_id")
 sample_id = int(sys.argv[1])  # USER-DEFINED SAMPLE ID
+stl_path = os.path.join('.', str(sample_id), 'stl')
+
+# Create the directory if it doesn't exist
+os.makedirs(stl_path, exist_ok=True)
 
 # --- Parameters ---
 x_min, x_max=-850,850 # Global x range 
@@ -87,7 +92,7 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('inlet.stl', file_type='stl_ascii')
+plane.export(os.path.join(stl_path,'inlet.stl'), file_type='stl_ascii')
 
 ######################################
 # Outlet - II 
@@ -110,7 +115,7 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('outlet.stl', file_type='stl_ascii')
+plane.export(os.path.join(stl_path,'outlet.stl'), file_type='stl_ascii')
 
 ######################################
 # Left - III 
@@ -133,7 +138,7 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('left.stl', file_type='stl_ascii')
+plane.export(os.path.join(stl_path,'left.stl'), file_type='stl_ascii')
 
 ######################################
 # Right - IV
@@ -156,7 +161,7 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('right.stl', file_type='stl_ascii')
+plane.export(os.path.join(stl_path,'right.stl'), file_type='stl_ascii')
 
 ######################################
 # Top - V
@@ -179,7 +184,7 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('top.stl', file_type='stl_ascii')
+plane.export(os.path.join(stl_path,'top.stl'), file_type='stl_ascii')
 
 ######################################
 # Bottom front - VI
@@ -202,7 +207,7 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('bottom_front.stl', file_type='stl_ascii')
+plane.export(os.path.join(stl_path,'bottom_front.stl'), file_type='stl_ascii')
 
 ######################################
 # Bottom back - VII
@@ -225,7 +230,7 @@ faces = np.array([
 plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 # Export to ASCII STL
-plane.export('bottom_back.stl', file_type='stl_ascii')
+plane.export(os.path.join(stl_path,'bottom_back.stl'), file_type='stl_ascii')
 
 ######################################
 # Wall bottom center (no-slip) - VIII 
@@ -391,7 +396,7 @@ for (w, h), height, pos, shape in zip(sizes, heights, positions, shapes):
     cylinders.append(building_open)
 
 # --- 8. Combine and export STL ---
-filename = f'{sample_id}.stl'
+filename = os.path.join(stl_path,f'{sample_id}.stl')
 with open(filename, 'w') as f:
     f.write(trimesh.exchange.stl.export_stl_ascii(trimesh.util.concatenate([surface_mesh] + cylinders)))
 
@@ -430,7 +435,7 @@ metadata = {
     "building_heights": heights
 }
 
-with open(f'{sample_id}_metadata.json', 'w') as f:
+with open(os.path.join(stl_path,f'{sample_id}_metadata.json'), 'w') as f:
     json.dump(metadata, f, indent=4)
 
 # --- 10. Summary info ---
