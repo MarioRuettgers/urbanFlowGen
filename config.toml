@@ -1,0 +1,65 @@
+## GEOMETRY GENERATOR
+# Global bounds
+[global]
+x_min = -850  # Global x range
+x_max = 850
+y_min = -350  # Global y range
+y_max = 350
+z_min = -350  # Global z range
+z_max = 350
+
+# Bottom center wall bounds
+[bottom_center]
+x_min_VIII = -300  # x range for wall bottom center - VIII
+x_max_VIII = 300
+
+# Safety distances
+[safety]
+sd_x = 100  # Minimum distance to wall bottom front (slip) - VI (after rotation)
+sd_y = 150  # Minimum distance to wall left - III, and wall right - IV (after rotation)
+md = 5      # Minimum distance between building surfaces
+
+# Number of buildings
+[buildings]
+b_min = 2   # Minimum number of buildings
+b_max = 16  # Maximum number of buildings
+
+# Rectangular buildings
+[rectangular]
+l_min = 10   # Min edge length of rectangular buildings
+l_max = 80   # Max edge length of rectangular buildings
+a_max = 2.5  # Max aspect ratio for normal buildings
+
+# Extreme rectangular buildings
+[extreme]
+E = 0.15     # Probability for extreme building
+e_max = 5.0  # Max aspect ratio for extreme buildings
+
+# Circular buildings
+[circular]
+C = 0.05     # Probability for circular building
+d_min = 10   # Min diameter
+d_max = 80   # Max diameter
+phi = 32     # Circumferential resolution
+
+# Building height range
+[height]
+h_min = 5    # Minimum height for normal/extreme/circular buildings
+h_max = 80   # Maximum height
+
+# Towers
+[towers]
+T = 0.07       # Probability for tower
+t_min = 50     # Min edge length of tower base
+t_max = 100    # Max edge length
+s_min = 80     # Min tower height
+s_max = 200    # Max tower height
+w_max = 1.5    # Max aspect ratio for towers
+
+# Roads
+[roads]
+r = 10         # Road width
+rh_min = 3     # Min number of horizontal roads
+rh_max = 8     # Max number of horizontal roads
+rv_min = 3     # Min number of vertical roads
+rv_max = 8     # Max number of vertical roads

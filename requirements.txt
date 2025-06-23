@@ -2,3 +2,4 @@ numpy
 trimesh
 shapely
 mapbox-earcut manifold3d
+toml

@@ -9,6 +9,7 @@ import json
 import random
 import sys
 import os
+import toml
 
 # Parts of the geometry
 # Inlet - I
@@ -20,6 +21,10 @@ import os
 # Bottom back - VII
 # Bottom center - VIII
 
+# Load configuration file
+config_path = 'config.toml'
+params = toml.load(config_path)
+
 #--- User input ---
 if len(sys.argv) < 2:
     raise ValueError("Missing required argument: sample_id")
@@ -29,47 +34,61 @@ stl_path = os.path.join('.', str(sample_id), 'stl')
 # Create the directory if it doesn't exist
 os.makedirs(stl_path, exist_ok=True)
 
-# --- Parameters ---
-x_min, x_max=-850,850 # Global x range 
-y_min, y_max = -350, 350 # Global y range
-z_min, z_max = -350, 350 # Global z range
+# Global bounds
+x_min = params['global']['x_min']
+x_max = params['global']['x_max']
+y_min = params['global']['y_min']
+y_max = params['global']['y_max']
+z_min = params['global']['z_min']
+z_max = params['global']['z_max']
 
-x_min_VIII, x_max_VIII = -300, 300 # x range for wall bottom center - VIII
+# Bottom center bounds
+x_min_VIII = params['bottom_center']['x_min_VIII']
+x_max_VIII = params['bottom_center']['x_max_VIII']
 
 # Safety distances
-sd_x = 100 # Minimum distance to wall bottom front (slip) - VI (after rotation)
-sd_y = 150 # Minimum distance to wall left - III, and wall right - IV (after rotation)
-md = 5  # Minimum distance between building surfaces
+sd_x = params['safety']['sd_x']
+sd_y = params['safety']['sd_y']
+md   = params['safety']['md']
 
 # Number of buildings
-b_min, b_max = 2, 16
+b_min = params['buildings']['b_min']
+b_max = params['buildings']['b_max']
 
 # Rectangular buildings
-l_min, l_max = 10, 80 # Range of rectangular building edge length
-a_max = 2.5 # Maximum aspect ratio for normal buildings
+l_min  = params['rectangular']['l_min']
+l_max  = params['rectangular']['l_max']
+a_max  = params['rectangular']['a_max']
 
 # Extreme buildings
-E = 0.15 # Probability for extreme building
-e_max = 5.0 # Maximum aspect ratio for extreme buildings
+E      = params['extreme']['E']
+e_max  = params['extreme']['e_max']
 
 # Circular buildings
-C = 0.05 # Probability for circular building
-d_min, d_max = 10, 80 # Range of circular building diameter
-phi = 32 # Circumferential resolution
+C      = params['circular']['C']
+d_min  = params['circular']['d_min']
+d_max  = params['circular']['d_max']
+phi    = params['circular']['phi']
 
-# Height for normal, extreme, and circular building
-h_min, h_max = 5, 80 
+# Heights
+h_min  = params['height']['h_min']
+h_max  = params['height']['h_max']
 
 # Towers
-T = 0.07 # Probability for tower
-t_min, t_max = 50, 100 # Range of tower edge length
-s_min, s_max = 80, 200 # Range of tower height
-w_max = 1.5 # Maximum aspect ratio for towers
+T      = params['towers']['T']
+t_min  = params['towers']['t_min']
+t_max  = params['towers']['t_max']
+s_min  = params['towers']['s_min']
+s_max  = params['towers']['s_max']
+w_max  = params['towers']['w_max']
 
 # Roads
-r = 10 # Road size
-rh_min, rh_max = 3, 8 # Range of the number of horizontal roads
-rv_min, rv_max = 3, 8 # Range of the number of vertical roads
+r       = params['roads']['r']
+rh_min  = params['roads']['rh_min']
+rh_max  = params['roads']['rh_max']
+rv_min  = params['roads']['rv_min']
+rv_max  = params['roads']['rv_max']
+
 
 ######################################
 # Inlet - I 
@@ -396,9 +415,25 @@ for (w, h), height, pos, shape in zip(sizes, heights, positions, shapes):
     cylinders.append(building_open)
 
 # --- 8. Combine and export STL ---
-filename = os.path.join(stl_path,f'{sample_id}.stl')
-with open(filename, 'w') as f:
-    f.write(trimesh.exchange.stl.export_stl_ascii(trimesh.util.concatenate([surface_mesh] + cylinders)))
+
+# Combine buildings into one mesh
+buildings_mesh = trimesh.util.concatenate(cylinders)
+
+# Define filenames
+plane_filename = os.path.join(stl_path, f'bottom_center_{sample_id}.stl')
+buildings_filename = os.path.join(stl_path, f'buildings_{sample_id}.stl')
+
+# Export plane mesh (single mesh, not a list)
+with open(plane_filename, 'w') as f:
+    f.write(trimesh.exchange.stl.export_stl_ascii(surface_mesh))
+
+# Export buildings mesh
+with open(buildings_filename, 'w') as f:
+    f.write(trimesh.exchange.stl.export_stl_ascii(buildings_mesh))
+
+#filename = os.path.join(stl_path,f'{sample_id}.stl')
+#with open(filename, 'w') as f:
+#    f.write(trimesh.exchange.stl.export_stl_ascii(trimesh.util.concatenate([surface_mesh] + cylinders)))
 
 # --- 9. Save metadata to JSON ---
 metadata = {
@@ -439,7 +474,8 @@ with open(os.path.join(stl_path,f'{sample_id}_metadata.json'), 'w') as f:
     json.dump(metadata, f, indent=4)
 
 # --- 10. Summary info ---
-print(f"✅ Exported: {filename}")
+print(f"✅ Plane mesh saved to: {plane_filename}")
+print(f"✅ Buildings mesh saved to: {buildings_filename}")
 print(f"📄 Metadata saved: {sample_id}_metadata.json")
 print(f"🏙 Buildings: {len(cylinders)} | Rotation: {angle_deg:.2f}°")
 
