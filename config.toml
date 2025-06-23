@@ -63,3 +63,14 @@ rh_min = 3     # Min number of horizontal roads
 rh_max = 8     # Max number of horizontal roads
 rv_min = 3     # Min number of vertical roads
 rv_max = 8     # Max number of vertical roads
+
+## GRID GENERATOR m-AIA
+[grid_mAIA]
+reductionFactor = 1.5058823529
+minLevel = 8
+maxUniformRefinementLevel = 9
+maxRfnmntLvl = 11
+maxBoundaryRfnLvl = 11
+smoothDistance = 3
+localMinBoundaryThreshold = 3
+
