@@ -6,13 +6,13 @@ config = toml.load('config.toml')
 refine = config['grid_mAIA']
 
 # Extract values
-reductionFactor = refine['reductionFactor']
-minLevel = refine['minLevel']
-maxUniformRefinementLevel = refine['maxUniformRefinementLevel']
-maxRfnmntLvl = refine['maxRfnmntLvl']
-maxBoundaryRfnLvl = refine['maxBoundaryRfnLvl']
-smoothDistance = refine['smoothDistance']
-localMinBoundaryThreshold = refine['localMinBoundaryThreshold']
+reductionFactor = refine['RF']
+minLevel = refine['RL_min']
+maxUniformRefinementLevel = refine['RL_max_unif']
+maxRfnmntLvl = refine['RL_max']
+maxBoundaryRfnLvl = refine['RL_max']
+smoothDistance = refine['Theta']
+localMinBoundaryThreshold = refine['Gamma']
 
 # Create extended lists with final value = 3x
 smoothDistanceList = [smoothDistance] * 8 + [smoothDistance * 3]

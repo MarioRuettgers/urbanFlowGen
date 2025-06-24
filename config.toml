@@ -1,5 +1,8 @@
 ## GEOMETRY GENERATOR
 # Global bounds
+[reference]
+d = 20
+
 [global]
 x_min = -850  # Global x range
 x_max = 850
@@ -66,11 +69,26 @@ rv_max = 8     # Max number of vertical roads
 
 ## GRID GENERATOR m-AIA
 [grid_mAIA]
-reductionFactor = 1.5058823529
-minLevel = 8
-maxUniformRefinementLevel = 9
-maxRfnmntLvl = 11
-maxBoundaryRfnLvl = 11
-smoothDistance = 3
-localMinBoundaryThreshold = 3
+RF = 1.5058823529
+RL_min = 8
+RL_max_unif = 9
+RL_max = 11
+Theta = 3
+Gamma = 3
 
+## SIMULATION m-AIA
+[sim_mAIA]
+tau = 350000
+Re = 12000
+tau_re_start = 1000
+Delta_tau_re = 50000
+Delta_tau_s = 50000
+Delta_tau_r = 50000
+RESTART = false
+tau_r = 300000
+TIME-AVERAGING = true
+tau_a_start = 300000
+tau_a_stop = 350000
+Delta_tau_a = 10
+RESET = true
+MONITOR = true
