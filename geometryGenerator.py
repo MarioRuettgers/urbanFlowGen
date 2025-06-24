@@ -483,12 +483,12 @@ def generate_geometry_toml(x: int, output_file: str = "geometry.toml"):
     filenames = {
         0: "./stl/inlet.stl",
         1: "./stl/outlet.stl",
-        2: "./stl/wall_left.stl",
-        3: "./stl/wall_right.stl",
-        4: "./stl/wall_top.stl",
-        5: "./stl/wall_bottom_front.stl",
-        6: "./stl/wall_bottom_back.stl",
-        7: f"./stl/wall_bottom_center_{x}.stl",
+        2: "./stl/left.stl",
+        3: "./stl/right.stl",
+        4: "./stl/top.stl",
+        5: "./stl/bottom_front.stl",
+        6: "./stl/bottom_back.stl",
+        7: f"./stl/bottom_center_{x}.stl",
         8: f"./stl/buildings_{x}.stl"
     }
 
