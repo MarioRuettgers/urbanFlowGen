@@ -38,4 +38,7 @@ UrbanFlowGen is executed with the bash script "urbanFlowGen.sh". This script aut
 
 This enables scalable and reproducible generation of parametric CFD cases for urban flow studies.
 
+The default slurm job scripts for grid generation ("grid.sh") and simulation ("run_gpu.sh") with m-AIA are compatible with the NVIDIA A-100 GPU partition on the JURECA-DC supercomputer at the Jülich Supercomputing Centre (JSC), Forschungszentrum Jülich GmbH, Germany:
+
+    P. Thörnig. JURECA: Data Centric and Booster Modules implementing the Modular Supercomputing Architecture at Jülich Supercomputing Centre. Journal of large-scale research          facilities, 7(A182), 2021.
  
