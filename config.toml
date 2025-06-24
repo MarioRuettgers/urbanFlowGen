@@ -1,7 +1,7 @@
 ## GEOMETRY GENERATOR
 # Global bounds
 [reference]
-d = 20
+b = 20
 
 [global]
 x_min = -850  # Global x range

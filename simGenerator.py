@@ -25,7 +25,7 @@ calcBcResidual=sim['MONITOR']
 
 maxRfnmntLvl=refine['RL_max']
 
-d=ref['d']
+b=ref['b']
 RF=refine['RF']
 L=glob['x_max']-glob['x_min']
 
@@ -33,7 +33,7 @@ L=glob['x_max']-glob['x_min']
 del_x = (RF * L)/(2^maxRfnmntLvl)
 
 # reference length as a multiple of del_x
-d_norm = d/del_x
+d_norm = b/del_x
 
 # Create properties dictionary
 properties = {
