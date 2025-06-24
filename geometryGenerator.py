@@ -30,9 +30,7 @@ if len(sys.argv) < 2:
     raise ValueError("Missing required argument: sample_id")
 sample_id = int(sys.argv[1])  # USER-DEFINED SAMPLE ID
 stl_path = os.path.join('.', str(sample_id), 'stl')
-
-# Create the directory if it doesn't exist
-os.makedirs(stl_path, exist_ok=True)
+geometry_path = os.path.join('.', str(sample_id))
 
 # Global bounds
 x_min = params['global']['x_min']
@@ -479,3 +477,68 @@ print(f"✅ Buildings mesh saved to: {buildings_filename}")
 print(f"📄 Metadata saved: {sample_id}_metadata.json")
 print(f"🏙 Buildings: {len(cylinders)} | Rotation: {angle_deg:.2f}°")
 
+# --- 11. Generate "geometry.toml" ---
+def generate_geometry_toml(x: int, output_file: str = "geometry.toml"):
+    # Fixed STL filenames except the two dynamic ones
+    filenames = {
+        0: "./stl/inlet.stl",
+        1: "./stl/outlet.stl",
+        2: "./stl/wall_left.stl",
+        3: "./stl/wall_right.stl",
+        4: "./stl/wall_top.stl",
+        5: "./stl/wall_bottom_front.stl",
+        6: "./stl/wall_bottom_back.stl",
+        7: f"./stl/wall_bottom_center_{x}.stl",
+        8: f"./stl/buildings_{x}.stl"
+    }
+
+    # Boundary conditions
+    bc = {
+        0: 1000,
+        1: 4000,
+        2: 3020,
+        3: 3020,
+        4: 3020,
+        5: 3020,
+        6: 3020,
+        7: 2000,
+        8: 2000
+    }
+
+    # Segment name to index mapping
+    body_segments = {
+        "body_segments.inlet": 0,
+        "body_segments.outlet": 1,
+        "body_segments.left": 2,
+        "body_segments.right": 3,
+        "body_segments.top": 4,
+        "body_segments.bottom_front": 5,
+        "body_segments.bottom_back": 6,
+        "body_segments.bottom_center": 7,
+        "body_segments.buildings": 8
+    }
+
+    # Assemble dictionary for TOML
+    geometry = {
+        "noSegments": 9,
+        "inOutSegmentsIds": [0, 1],
+    }
+
+    # Add filenames
+    for idx, fname in filenames.items():
+        geometry[f"filename.{idx}"] = fname
+
+    # Add body segment mapping
+    geometry.update(body_segments)
+
+    # Add boundary conditions
+    for idx, val in bc.items():
+        geometry[f"BC.{idx}"] = val
+
+    # Write to TOML file
+    with open(os.path.join(geometry_path,output_file), "w") as f:
+        toml.dump(geometry, f)
+
+    print(f"✅ geometry.toml generated (x = {x})")
+
+generate_geometry_toml(x=sample_id)
