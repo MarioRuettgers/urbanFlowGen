@@ -13,7 +13,7 @@ All user-specific parameters can be set in the file "config.toml". Details about
 
 Step 1, generating geometries of urban CFD scenarios, can be realized with "geometryGenerator.py". Users can define key geometric properties—including domain dimensions, building types, and placement rules—using a set of normalized parameters. The generator supports rectangular, circular, and tower-like buildings with customizable sizes, aspect ratios, and placement logic, including spacing constraints for simulation stability. Buildings are randomly distributed within a defined urban section, with optional rotation to simulate varying wind angles. Additionally, non-geometrical roads can be added to enhance realism by reflecting typical urban layouts without affecting the exported geometry. The geometry generates Stereolithography (STL) files of a large channel with the buildings mounted on the bottom plane. When executing "geometryGenerator.py", a geometry ID needs be inserted, e.g., "geometryGenerator.py 1" if the geometry should have ID=1. The ID and all properties are stored in a JavaScript Object Notation (JSON) file once a geometry is generated. Per default, the STL and JSON files are stored in "./ID/stl/".
 
-Generating property files for grid generation and simulation is demonstrated for two use cases: m-AIA and OpenFOAM. 
+Steps 2 and 3 are demonstrated for two use cases: m-AIA and OpenFOAM. 
 
 m-AIA:
 
