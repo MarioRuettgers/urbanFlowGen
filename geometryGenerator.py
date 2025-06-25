@@ -20,6 +20,7 @@ import toml
 # Bottom front - VI
 # Bottom back - VII
 # Bottom center - VIII
+# Buildings - IX
 
 # Load configuration file
 config_path = 'config.toml'
@@ -250,7 +251,8 @@ plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 plane.export(os.path.join(stl_path,'bottom_back.stl'), file_type='stl_ascii')
 
 ######################################
-# Wall bottom center (no-slip) - VIII 
+# Bottom center - VIII
+# Buildings - IX 
 ######################################
 # --- 1. Rotation setup ---
 angle_deg = np.random.uniform(0, 90)
