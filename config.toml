@@ -4,28 +4,30 @@
 b = 20
 
 [global]
-x_min = -850  # Global x range
-x_max = 850
-y_min = -350  # Global y range
-y_max = 350
-z_min = -350  # Global z range
-z_max = 350
+x_min = -1200  # Global x range
+x_max = 1200
+y_min = -600  # Global y range
+y_max = 600
+z_min = -300  # Global z range
+z_max = 900
 
 # Bottom center wall bounds
 [bottom_center]
-x_min_VIII = -300  # x range for wall bottom center - VIII
-x_max_VIII = 300
+x_min_VII = -700  # x range for bottom plate - VII
+x_max_VII = 0
+y_min_VII = -250  # y range for bottom plate - VII
+y_max_VII = 250
 
 # Safety distances
 [safety]
-sd_x = 100  # Minimum distance to wall bottom front (slip) - VI (after rotation)
-sd_y = 150  # Minimum distance to wall left - III, and wall right - IV (after rotation)
+sd_x = 200  # Minimum distance to no-slip - slip transition (after rotation)
+sd_y = 100  # Minimum distance to no-slip - slip transition (after rotation)
 md = 5      # Minimum distance between building surfaces
 
 # Number of buildings
 [buildings]
 b_min = 2   # Minimum number of buildings
-b_max = 16  # Maximum number of buildings
+b_max = 20  # Maximum number of buildings
 
 # Rectangular buildings
 [rectangular]

@@ -17,10 +17,9 @@ import toml
 # Left - III
 # Right - IV
 # Top - V
-# Bottom front - VI
-# Bottom back - VII
-# Bottom center - VIII
-# Buildings - IX
+# Bottom around plate - VI
+# Bottom plate - VII
+# Buildings - VIII
 
 # Load configuration file
 config_path = 'config.toml'
@@ -42,8 +41,10 @@ z_min = params['global']['z_min']
 z_max = params['global']['z_max']
 
 # Bottom center bounds
-x_min_VIII = params['bottom_center']['x_min_VIII']
-x_max_VIII = params['bottom_center']['x_max_VIII']
+x_min_VII = params['bottom_center']['x_min_VII']
+x_max_VII = params['bottom_center']['x_max_VII']
+y_min_VII = params['bottom_center']['y_min_VII']
+y_max_VII = params['bottom_center']['y_max_VII']
 
 # Safety distances
 sd_x = params['safety']['sd_x']
@@ -88,211 +89,160 @@ rh_max  = params['roads']['rh_max']
 rv_min  = params['roads']['rv_min']
 rv_max  = params['roads']['rv_max']
 
+def make_patch(v0, v1, v2, v3):
+    """Create a rectangular patch mesh from four corner vertices."""
+    vertices = np.array([v0, v1, v2, v3])
+    faces = np.array([[0, 1, 2], [0, 2, 3]])
+    return trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
 
 ######################################
-# Inlet - I 
+# Inlet - I
 ######################################
-# Define the four corner vertices of the rectangle at x = 0
-vertices = np.array([
+inlet = make_patch(
     [x_min, y_min, z_min],
     [x_min, y_max, z_min],
     [x_min, y_max, z_max],
     [x_min, y_min, z_max]
-])
-
-# Define two triangles that make up the rectangle
-faces = np.array([
-    [0, 1, 2],
-    [0, 2, 3]
-])
-
-# Create a mesh
-plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
-
-# Export to ASCII STL
-plane.export(os.path.join(stl_path,'inlet.stl'), file_type='stl_ascii')
+)
+inlet.export(os.path.join(stl_path, 'inlet.stl'), file_type='stl_ascii')
 
 ######################################
-# Outlet - II 
+# Outlet - II
 ######################################
-# Define the four corner vertices of the rectangle at x = 0
-vertices = np.array([
+outlet = make_patch(
     [x_max, y_min, z_min],
     [x_max, y_max, z_min],
     [x_max, y_max, z_max],
     [x_max, y_min, z_max]
-])
-
-# Define two triangles that make up the rectangle
-faces = np.array([
-    [0, 1, 2],
-    [0, 2, 3]
-])
-
-# Create a mesh
-plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
-
-# Export to ASCII STL
-plane.export(os.path.join(stl_path,'outlet.stl'), file_type='stl_ascii')
+)
+outlet.export(os.path.join(stl_path, 'outlet.stl'), file_type='stl_ascii')
 
 ######################################
-# Left - III 
+# Left - III
 ######################################
-# Define the four corner vertices of the rectangle at x = 0
-vertices = np.array([
+left = make_patch(
     [x_min, y_max, z_min],
     [x_max, y_max, z_min],
     [x_max, y_max, z_max],
     [x_min, y_max, z_max]
-])
-
-# Define two triangles that make up the rectangle
-faces = np.array([
-    [0, 1, 2],
-    [0, 2, 3]
-])
-
-# Create a mesh
-plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
-
-# Export to ASCII STL
-plane.export(os.path.join(stl_path,'left.stl'), file_type='stl_ascii')
+)
+left.export(os.path.join(stl_path, 'left.stl'), file_type='stl_ascii')
 
 ######################################
 # Right - IV
 ######################################
-# Define the four corner vertices of the rectangle at x = 0
-vertices = np.array([
+right = make_patch(
     [x_min, y_min, z_min],
     [x_max, y_min, z_min],
     [x_max, y_min, z_max],
     [x_min, y_min, z_max]
-])
-
-# Define two triangles that make up the rectangle
-faces = np.array([
-    [0, 1, 2],
-    [0, 2, 3]
-])
-
-# Create a mesh
-plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
-
-# Export to ASCII STL
-plane.export(os.path.join(stl_path,'right.stl'), file_type='stl_ascii')
+)
+right.export(os.path.join(stl_path, 'right.stl'), file_type='stl_ascii')
 
 ######################################
 # Top - V
 ######################################
-# Define the four corner vertices of the rectangle at x = 0
-vertices = np.array([
+top = make_patch(
     [x_min, y_min, z_max],
     [x_max, y_min, z_max],
     [x_max, y_max, z_max],
     [x_min, y_max, z_max]
-])
-
-# Define two triangles that make up the rectangle
-faces = np.array([
-    [0, 1, 2],
-    [0, 2, 3]
-])
-
-# Create a mesh
-plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
-
-# Export to ASCII STL
-plane.export(os.path.join(stl_path,'top.stl'), file_type='stl_ascii')
+)
+top.export(os.path.join(stl_path, 'top.stl'), file_type='stl_ascii')
 
 ######################################
-# Bottom front - VI
+# Bottom surround plate - VI
 ######################################
-# Define the four corner vertices of the rectangle at x = 0
-vertices = np.array([
-    [x_min, y_min, z_min],
-    [x_min_VIII, y_min, z_min],
-    [x_min_VIII, y_max, z_min],
-    [x_min, y_max, z_min]
+# This part reuses the `make_patch()` from earlier message
+bottom_surround = trimesh.util.concatenate([
+    # Left of plate
+    make_patch(
+        [x_min,     y_min,     z_min],
+        [x_min_VII, y_min,     z_min],
+        [x_min_VII, y_max,     z_min],
+        [x_min,     y_max,     z_min]
+    ),
+    # Right of plate
+    make_patch(
+        [x_max_VII, y_min,     z_min],
+        [x_max,     y_min,     z_min],
+        [x_max,     y_max,     z_min],
+        [x_max_VII, y_max,     z_min]
+    ),
+    # Front of plate
+    make_patch(
+        [x_min_VII, y_max_VII, z_min],
+        [x_max_VII, y_max_VII, z_min],
+        [x_max_VII, y_max,     z_min],
+        [x_min_VII, y_max,     z_min]
+    ),
+    # Back of plate
+    make_patch(
+        [x_min_VII, y_min,     z_min],
+        [x_max_VII, y_min,     z_min],
+        [x_max_VII, y_min_VII, z_min],
+        [x_min_VII, y_min_VII, z_min]
+    )
 ])
-
-# Define two triangles that make up the rectangle
-faces = np.array([
-    [0, 1, 2],
-    [0, 2, 3]
-])
-
-# Create a mesh
-plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
-
-# Export to ASCII STL
-plane.export(os.path.join(stl_path,'bottom_front.stl'), file_type='stl_ascii')
-
-######################################
-# Bottom back - VII
-######################################
-# Define the four corner vertices of the rectangle at x = 0
-vertices = np.array([
-    [x_max, y_min, z_min],
-    [x_max_VIII, y_min, z_min],
-    [x_max_VIII, y_max, z_min],
-    [x_max, y_max, z_min]
-])
-
-# Define two triangles that make up the rectangle
-faces = np.array([
-    [0, 1, 2],
-    [0, 2, 3]
-])
-
-# Create a mesh
-plane = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
-
-# Export to ASCII STL
-plane.export(os.path.join(stl_path,'bottom_back.stl'), file_type='stl_ascii')
+bottom_surround.export(os.path.join(stl_path, 'bottom_around_plate.stl'), file_type='stl_ascii')
 
 ######################################
-# Bottom center - VIII
-# Buildings - IX 
+# Bottom plate - VII
+# Buildings - VIII 
 ######################################
 # --- 1. Rotation setup ---
 angle_deg = np.random.uniform(0, 90)
 angle_rad = np.deg2rad(angle_deg)
 
-R = np.array([
-    [np.cos(angle_rad), -np.sin(angle_rad)],
-    [np.sin(angle_rad),  np.cos(angle_rad)]
+# Get center of the plate
+plate_center = np.array([
+    (x_min_VII + x_max_VII) / 2,
+    (y_min_VII + y_max_VII) / 2
 ])
+
+def rotate_points(points, angle_rad, center):
+    """
+    Rotate a 2D point or array of points around a center by a given angle in radians.
+    """
+    points = np.atleast_2d(points)
+    R = np.array([
+        [np.cos(angle_rad), -np.sin(angle_rad)],
+        [np.sin(angle_rad),  np.cos(angle_rad)]
+    ])
+    return (points - center) @ R.T + center
+
 
 # --- 2. Outer plane polygon ---
 outer = Polygon([
-    [x_min_VIII, y_min],
-    [x_max_VIII, y_min],
-    [x_max_VIII, y_max],
-    [x_min_VIII, y_max]
+    [x_min_VII, y_min_VII],
+    [x_max_VII, y_min_VII],
+    [x_max_VII, y_max_VII],
+    [x_min_VII, y_max_VII]
 ])
 
 # --- 3. Generate random road network ---
-def generate_random_roads(x_min_VIII, x_max_VIII, y_min, y_max, r):
+def generate_random_roads(x_min_VII, x_max_VII, y_min_VII, y_max_VII, r):
     global num_vertical_roads, num_horizontal_roads
     num_vertical_roads = np.random.randint(rv_min, rv_max)
     num_horizontal_roads = np.random.randint(rh_min, rh_max)
 
-    vertical_positions = np.sort(np.random.uniform(x_min_VIII + sd_x, x_max_VIII - sd_x, num_vertical_roads))
-    horizontal_positions = np.sort(np.random.uniform(y_min + sd_y, y_max - sd_y, num_horizontal_roads))
+    vertical_positions = np.sort(np.random.uniform(x_min_VII + sd_x, x_max_VII - sd_x, num_vertical_roads))
+    horizontal_positions = np.sort(np.random.uniform(y_min_VII + sd_y, y_max_VII - sd_y, num_horizontal_roads))
 
     vertical_roads = [
-        LineString([[x, y_min], [x, y_max]]).buffer(r / 2)
+        LineString([[x, y_min_VII], [x, y_max_VII]]).buffer(r / 2)
         for x in vertical_positions
     ]
     horizontal_roads = [
-        LineString([[x_min_VIII, y], [x_max_VIII, y]]).buffer(r / 2)
+        LineString([[x_min_VII, y], [x_max_VII, y]]).buffer(r / 2)
         for y in horizontal_positions
     ]
 
     return vertical_roads + horizontal_roads
 
-roads = generate_random_roads(x_min_VIII, x_max_VIII, y_min, y_max, r)
-rotated_roads = [rotate(road, angle_deg, origin=(0, 0)) for road in roads]
+roads = generate_random_roads(x_min_VII, x_max_VII, y_min_VII, y_max_VII, r)
+origin=tuple(plate_center)
+rotated_roads = [rotate(road, angle_deg, origin=origin) for road in roads]
 road_union = unary_union(rotated_roads)
 
 # --- 4. Generate building footprints ---
@@ -333,6 +283,8 @@ shapes = []
 attempts = 0
 max_attempts = 1000
 
+
+
 while len(holes) < num_buildings and attempts < max_attempts:
     attempts += 1
     w, h, height, shape = random_building_footprint()
@@ -340,21 +292,26 @@ while len(holes) < num_buildings and attempts < max_attempts:
     buffer_x = sd_x + diag / 2
     buffer_y = sd_y + diag / 2
 
-    x_range = (x_min_VIII + buffer_x, x_max_VIII - buffer_x)
-    y_range = (y_min + buffer_y, y_max - buffer_y)
+    x_range = (x_min_VII + buffer_x, x_max_VII - buffer_x)
+    y_range = (y_min_VII + buffer_y, y_max_VII - buffer_y)
 
     initial_pos = np.array([
         np.random.uniform(*x_range),
         np.random.uniform(*y_range)
     ])
-    rotated_pos = initial_pos @ R.T
+    #rotated_pos = rotate_around(initial_pos, angle_rad, plate_center)
+
+    # Rotate the *position* of the building to match plate rotation
+    rotated_pos = rotate_points(initial_pos, angle_rad, plate_center)[0]
 
     if shape == 'circle':
         radius = w / 2
         theta = np.linspace(0, 2 * np.pi, phi , endpoint=False)
         circle_points = np.column_stack([np.cos(theta), np.sin(theta)]) * radius
-        rotated_circle = circle_points @ R.T + rotated_pos
+        # Rotate the shape around origin (it’s local), then place at rotated position
+        rotated_circle = rotate_points(circle_points, angle_rad, np.array([0, 0])) + rotated_pos
         hole_poly = Polygon(rotated_circle)
+
     else:
         hw, hh = w / 2, h / 2
         local_rect = np.array([
@@ -363,7 +320,7 @@ while len(holes) < num_buildings and attempts < max_attempts:
             [ hw,  hh],
             [-hw,  hh]
         ])
-        rotated_rect = local_rect @ R.T + rotated_pos
+        rotated_rect = rotate_points(local_rect, angle_rad, np.array([0, 0])) + rotated_pos
         hole_poly = Polygon(rotated_rect)
 
     if not outer.contains(hole_poly):
@@ -420,7 +377,7 @@ for (w, h), height, pos, shape in zip(sizes, heights, positions, shapes):
 buildings_mesh = trimesh.util.concatenate(cylinders)
 
 # Define filenames
-plane_filename = os.path.join(stl_path, f'bottom_center_{sample_id}.stl')
+plane_filename = os.path.join(stl_path, f'bottom_plate_{sample_id}.stl')
 buildings_filename = os.path.join(stl_path, f'buildings_{sample_id}.stl')
 
 # Export plane mesh (single mesh, not a list)
@@ -440,7 +397,8 @@ metadata = {
     "sample_id": sample_id,
     "rotation_angle_deg": round(angle_deg, 2),
     "domain": {"x_min": x_min, "x_max": x_max, "y_min": y_min, "y_max": y_max},
-    "bounds_for_x_of_section_VIII": {"x_min_VIII": x_min_VIII, "x_max_VIII": x_max_VIII},
+    "bounds_for_x_of_section_VII": {"x_min_VII": x_min_VII, "x_max_VII": x_max_VII},
+    "bounds_for_y_of_section_VII": {"y_min_VII": y_min_VII, "y_max_VII": y_max_VII},
     "safety_distance_x": sd_x,
     "safety_distance_y": sd_y,
     "min_building_distance": md,
@@ -488,10 +446,9 @@ def generate_geometry_toml(x: int, output_file: str = "geometry.toml"):
         2: "./stl/left.stl",
         3: "./stl/right.stl",
         4: "./stl/top.stl",
-        5: "./stl/bottom_front.stl",
-        6: "./stl/bottom_back.stl",
-        7: f"./stl/bottom_center_{x}.stl",
-        8: f"./stl/buildings_{x}.stl"
+        5: "./stl/bottom_around_plate.stl",
+        6: f"./stl/bottom_plate_{x}.stl",
+        7: f"./stl/buildings_{x}.stl"
     }
 
     # Boundary conditions
@@ -502,9 +459,8 @@ def generate_geometry_toml(x: int, output_file: str = "geometry.toml"):
         3: 3020,
         4: 3020,
         5: 3020,
-        6: 3020,
-        7: 2000,
-        8: 2000
+        6: 2000,
+        7: 2000
     }
 
     # Segment name to index mapping
@@ -514,15 +470,14 @@ def generate_geometry_toml(x: int, output_file: str = "geometry.toml"):
         "body_segments.left": 2,
         "body_segments.right": 3,
         "body_segments.top": 4,
-        "body_segments.bottom_front": 5,
-        "body_segments.bottom_back": 6,
-        "body_segments.bottom_center": 7,
-        "body_segments.buildings": 8
+        "body_segments.bottom_around_plate": 5,
+        "body_segments.bottom_plate": 6,
+        "body_segments.buildings": 7
     }
 
     # Assemble dictionary for TOML
     geometry = {
-        "noSegments": 9,
+        "noSegments": 8,
         "inOutSegmentsIds": [0, 1],
     }
 
