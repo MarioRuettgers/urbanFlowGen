@@ -425,7 +425,8 @@ metadata = {
     "horizontal_road_count": num_horizontal_roads,
     "building_shapes": shapes,
     "building_sizes": sizes,
-    "building_heights": heights
+    "building_heights": heights,
+    "building_positions": [pos.tolist() for pos in positions]
 }
 
 with open(os.path.join(stl_path,f'{sample_id}_metadata.json'), 'w') as f:
