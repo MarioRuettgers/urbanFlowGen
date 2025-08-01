@@ -20,14 +20,15 @@ y_max_VII = 250
 
 # Safety distances
 [safety]
-sd_x = 200  # Minimum distance to no-slip - slip transition (after rotation)
+sd_x_neg = 150  # Minimum distance to no-slip - slip transition (after rotation)
+sd_x_pos = 300  # Minimum distance to no-slip - slip transition (after rotation)
 sd_y = 100  # Minimum distance to no-slip - slip transition (after rotation)
 md = 5      # Minimum distance between building surfaces
 
 # Number of buildings
 [buildings]
-b_min = 2   # Minimum number of buildings
-b_max = 20  # Maximum number of buildings
+b_min = 1   # Minimum number of buildings
+b_max = 2  # Maximum number of buildings
 
 # Rectangular buildings
 [rectangular]
@@ -71,12 +72,15 @@ rv_max = 8     # Max number of vertical roads
 
 ## GRID GENERATOR m-AIA
 [grid_mAIA]
-RF = 1.5058823529
+RF = 1.06666666666667
 RL_min = 8
-RL_max_unif = 9
-RL_max = 11
-Theta = 3
-Gamma = 3
+RL_max_unif = 8
+RL_max = 13
+REF_b = 16
+REF_w = 300
+x_incr = 10
+y_incr = 6
+z_incr = 6
 
 ## SIMULATION m-AIA
 [sim_mAIA]

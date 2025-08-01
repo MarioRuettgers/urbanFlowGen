@@ -47,7 +47,8 @@ y_min_VII = params['bottom_center']['y_min_VII']
 y_max_VII = params['bottom_center']['y_max_VII']
 
 # Safety distances
-sd_x = params['safety']['sd_x']
+sd_x_neg = params['safety']['sd_x_neg']
+sd_x_pos = params['safety']['sd_x_pos']
 sd_y = params['safety']['sd_y']
 md   = params['safety']['md']
 
@@ -226,7 +227,7 @@ def generate_random_roads(x_min_VII, x_max_VII, y_min_VII, y_max_VII, r):
     num_vertical_roads = np.random.randint(rv_min, rv_max)
     num_horizontal_roads = np.random.randint(rh_min, rh_max)
 
-    vertical_positions = np.sort(np.random.uniform(x_min_VII + sd_x, x_max_VII - sd_x, num_vertical_roads))
+    vertical_positions = np.sort(np.random.uniform(x_min_VII + sd_x_neg, x_max_VII - sd_x_pos, num_vertical_roads))
     horizontal_positions = np.sort(np.random.uniform(y_min_VII + sd_y, y_max_VII - sd_y, num_horizontal_roads))
 
     vertical_roads = [
@@ -289,10 +290,11 @@ while len(holes) < num_buildings and attempts < max_attempts:
     attempts += 1
     w, h, height, shape = random_building_footprint()
     diag = np.sqrt(w**2 + h**2)
-    buffer_x = sd_x + diag / 2
+    buffer_x_neg = sd_x_neg + diag / 2
+    buffer_x_pos = sd_x_pos + diag / 2
     buffer_y = sd_y + diag / 2
 
-    x_range = (x_min_VII + buffer_x, x_max_VII - buffer_x)
+    x_range = (x_min_VII + buffer_x_neg, x_max_VII - buffer_x_pos)
     y_range = (y_min_VII + buffer_y, y_max_VII - buffer_y)
 
     initial_pos = np.array([
@@ -399,7 +401,8 @@ metadata = {
     "domain": {"x_min": x_min, "x_max": x_max, "y_min": y_min, "y_max": y_max},
     "bounds_for_x_of_section_VII": {"x_min_VII": x_min_VII, "x_max_VII": x_max_VII},
     "bounds_for_y_of_section_VII": {"y_min_VII": y_min_VII, "y_max_VII": y_max_VII},
-    "safety_distance_x": sd_x,
+    "safety_distance_x_negative": sd_x_neg,
+    "safety_distance_x_positive": sd_x_pos,
     "safety_distance_y": sd_y,
     "min_building_distance": md,
     "bounds_for_nr_of_buildings": [b_min, b_max],

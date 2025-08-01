@@ -61,7 +61,7 @@ generate_case() {
     python "$GEOMETRY_SCRIPT" "$i" || { echo "❌ Geometry generation failed for $i"; return 1; }
 
     # Grid properties
-    python "$GRID_SCRIPT" || { echo "❌ Grid generation failed for $i"; return 1; }
+    python "$GRID_SCRIPT" "$i" || { echo "❌ Grid generation failed for $i"; return 1; }
     mv properties_grid.toml "$TARGET_FOLDER"
 
     # Simulation properties
