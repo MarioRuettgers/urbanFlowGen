@@ -301,17 +301,13 @@ while len(holes) < num_buildings and attempts < max_attempts:
         np.random.uniform(*x_range),
         np.random.uniform(*y_range)
     ])
-    #rotated_pos = rotate_around(initial_pos, angle_rad, plate_center)
-
-    # Rotate the *position* of the building to match plate rotation
-    rotated_pos = rotate_points(initial_pos, angle_rad, plate_center)[0]
-
+    
     if shape == 'circle':
         radius = w / 2
         theta = np.linspace(0, 2 * np.pi, phi , endpoint=False)
         circle_points = np.column_stack([np.cos(theta), np.sin(theta)]) * radius
         # Rotate the shape around origin (it’s local), then place at rotated position
-        rotated_circle = rotate_points(circle_points, angle_rad, np.array([0, 0])) + rotated_pos
+        rotated_circle = rotate_points(circle_points, angle_rad, np.array([0, 0])) + initial_pos
         hole_poly = Polygon(rotated_circle)
 
     else:
@@ -322,7 +318,7 @@ while len(holes) < num_buildings and attempts < max_attempts:
             [ hw,  hh],
             [-hw,  hh]
         ])
-        rotated_rect = rotate_points(local_rect, angle_rad, np.array([0, 0])) + rotated_pos
+        rotated_rect = rotate_points(local_rect, angle_rad, np.array([0, 0])) + initial_pos
         hole_poly = Polygon(rotated_rect)
 
     if not outer.contains(hole_poly):
@@ -336,7 +332,7 @@ while len(holes) < num_buildings and attempts < max_attempts:
         continue
 
     holes.append(hole_poly)
-    positions.append(rotated_pos)
+    positions.append(initial_pos)
     sizes.append((w, h))
     heights.append(height)
     shapes.append(shape)
