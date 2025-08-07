@@ -25,15 +25,15 @@ calcBcResidual=sim['MONITOR']
 
 maxRfnmntLvl=refine['RL_max']
 
-b=ref['b']
+l=ref['l']
 RF=refine['RF']
 L=glob['x_max']-glob['x_min']
 
 # cell size at max refinement level
-del_x = (RF * L)/(2^maxRfnmntLvl)
+del_x = (RF * L)/(2**maxRfnmntLvl)
 
 # reference length as a multiple of del_x
-d_norm = b/del_x
+l_norm = l/del_x
 
 # Create properties dictionary
 properties = {
@@ -106,7 +106,7 @@ properties = {
     # -------------- FLOW VARIABLES --------------
     'Ma': 0.03,
     'Re': Re,
-    'referenceLengthLB': d_norm,
+    'referenceLengthLB': l_norm,
     'lbControlInflow': 0,
     'externalForcing': False,
 

@@ -2,6 +2,8 @@ import toml
 import json
 import sys
 import os
+import math
+import numpy as np
 
 #--- User input ---
 if len(sys.argv) < 2:
@@ -17,13 +19,47 @@ def load_building_data(json_path):
     positions = data["building_positions"]
     sizes = data["building_sizes"]
     heights = data["building_heights"]
+    angles = data["rotation_angle_deg"]
+
+    # Ensure angles is a list
+    if isinstance(angles, (int, float)):
+        angles = [angles] * len(positions)
 
     buildings = []
-    for pos, size, height in zip(positions, sizes, heights):
-        building = (tuple(pos), tuple(size), height)
-        buildings.append(building)
+    for pos, size, height, angle in zip(positions, sizes, heights, angles):
+        buildings.append((tuple(pos), tuple(size), height, angle))
 
     return buildings
+
+
+# get bounds of rotated buildings
+def get_rotated_aabb(center, size, angle_deg):
+    cx, cy = center
+    w, h = size
+    theta = math.radians(angle_deg)
+
+    # Relative corner coordinates
+    rel_corners = np.array([
+        [-w / 2, -h / 2],
+        [ w / 2, -h / 2],
+        [ w / 2,  h / 2],
+        [-w / 2,  h / 2]
+    ])
+
+    # Rotation matrix
+    R = np.array([
+        [math.cos(theta), -math.sin(theta)],
+        [math.sin(theta),  math.cos(theta)]
+    ])
+
+    # Rotate corners
+    rotated = np.dot(rel_corners, R.T) + np.array([cx, cy])
+
+    # Axis-aligned bounding box
+    xmin, xmax = rotated[:,0].min(), rotated[:,0].max()
+    ymin, ymax = rotated[:,1].min(), rotated[:,1].max()
+    return xmin, xmax, ymin, ymax
+
 
 # Load user config
 config = toml.load('config.toml')
@@ -66,28 +102,27 @@ buildings = load_building_data(json_path)
 refinement_by_level = {}
 
 # === BUILDING REFINEMENT PATCHES ===
-for pos, (w, h), height in buildings:
+for pos, (w, h), height, angle in buildings:
     cx, cy = pos
-    xmin = xmax = ymin = ymax = zmin = zmax = None  # Initialize
+    xmin, xmax, ymin, ymax = get_rotated_aabb((cx, cy), (w, h), angle)
+    zmin = z_min
+    zmax = z_min + height
 
     for level in range(maxRfnmntLvl, minLevel, -1):
         cs = cell_size(level, reductionFactor, L)
 
         if level == maxRfnmntLvl:
-            # Finest level: base box
             dx_neg = dx_pos = boundary_ref * cs
             dy_neg = dy_pos = boundary_ref * cs
             dz = boundary_ref * cs
 
-            xmin = cx - w / 2 - dx_neg
-            xmax = cx + w / 2 + dx_pos
-            ymin = cy - h / 2 - dy_neg
-            ymax = cy + h / 2 + dy_pos
-            zmin = z_min
-            zmax = z_min + height + dz
+            xmin -= dx_neg
+            xmax += dx_pos
+            ymin -= dy_neg
+            ymax += dy_pos
+            zmax += dz
 
         elif level == maxRfnmntLvl - 1:
-            # Wake refinement: asymmetric in x
             dx_neg = x_incr * cs
             dx_pos = wake_ref_x * cs
             dy_neg = dy_pos = y_incr * cs
@@ -100,7 +135,6 @@ for pos, (w, h), height in buildings:
             zmax += dz
 
         else:
-            # Symmetric expansion
             dx = x_incr * cs
             dy = y_incr * cs
             dz = z_incr * cs
@@ -121,6 +155,7 @@ for pos, (w, h), height in buildings:
             'zmin': zmin,
             'zmax': zmax
         })
+
 
 # === FLOOR REFINEMENT PATCHES ===
 xmin, xmax = x0, x1
