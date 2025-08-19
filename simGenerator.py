@@ -84,7 +84,7 @@ properties = {
     'pp_averageStartTimestep': pp_averageStartTimestep,
     'pp_averageStopTimestep': pp_averageStopTimestep,
     'pp_averageInterval': pp_averageInterval,
-    'pp_averageRestartInterval': 50000,
+    'pp_averageRestartInterval': restartInterval,
     'pp_averageRestart': pp_averageRestart,
 
     'solverMethod.0': "MAIA_LATTICE_CUMULANT",
