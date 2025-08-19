@@ -47,6 +47,7 @@ properties = {
     'scratchSize': 80.0,
     'nrHaloLayer': 1,
     'calcBcResidual': calcBcResidual,
+    'correctInterfaceBcCells': True,
     'multiSolverGrid': True,
     'multiSolver': True,
 
