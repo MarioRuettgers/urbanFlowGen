@@ -111,7 +111,7 @@ properties = {
     'externalForcing': False,
 
     # ----------- GEOMETRY SEGMENTATION ----------
-    'inflowSegmentIds': [3],
+    'inflowSegmentIds': [0],
     'maxNoCells': 40000000,
     'reducedComm': True,
     'initVelocityMethod': "fromSTL",
