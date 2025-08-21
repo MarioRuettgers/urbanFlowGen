@@ -95,7 +95,7 @@ properties = {
     'noDistributions': 27,
     'timeSteps': timeSteps,
     'noSolvers': 2,
-    'multiBCTreatment': "W-I-P",
+    'multiBCTreatment': "multiple",
 
     # ------------ FLOW INITIALIZATION -----------
     'initMethod': "LB_FROM_ZERO_INIT",
