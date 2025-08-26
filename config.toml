@@ -1,7 +1,7 @@
 ## GEOMETRY GENERATOR
 # Global bounds
 [reference]
-b = 20
+l = 20
 
 [global]
 x_min = -1200  # Global x range
@@ -27,8 +27,8 @@ md = 5      # Minimum distance between building surfaces
 
 # Number of buildings
 [buildings]
-b_min = 1   # Minimum number of buildings
-b_max = 2  # Maximum number of buildings
+b_min = 5   # Minimum number of buildings
+b_max = 20  # Maximum number of buildings
 
 # Rectangular buildings
 [rectangular]
@@ -84,17 +84,17 @@ z_incr = 6
 
 ## SIMULATION m-AIA
 [sim_mAIA]
-tau = 350000
-Re = 12000
+tau = 800000
+Re = 9300
 tau_re_start = 1000
 Delta_tau_re = 50000
-Delta_tau_s = 50000
-Delta_tau_r = 50000
+Delta_tau_s = 100000
+Delta_tau_r = 100000
 RESTART = false
 tau_r = 300000
 TIME-AVERAGING = true
 tau_a_start = 300000
-tau_a_stop = 350000
-Delta_tau_a = 10
+tau_a_stop = 800000
+Delta_tau_a = 25
 RESET = true
 MONITOR = true

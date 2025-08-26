@@ -107,7 +107,7 @@ properties = {
     # -------------- FLOW VARIABLES --------------
     'Ma': 0.03,
     'Re': Re,
-    'referenceLengthLB': int(l_norm),
+    'referenceLengthLB': int(round(l_norm)),
     'lbControlInflow': 0,
     'externalForcing': False,
 
