@@ -65,7 +65,7 @@ properties = {
     # -------------- SOLUTION PROPERTIES ----------------
     'solutionInterval': solutionInterval,
     'restartInterval': restartInterval,
-    'residualInterval': 50000,
+    'residualInterval': 5000000,
     'restartTimeStep': restartTimeStep,
 
     # -------------- NUMERICAL PROPERTIES --------------
