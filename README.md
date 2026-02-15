@@ -48,7 +48,11 @@ The default slurm job scripts for grid generation ("grid.sh") and simulation ("r
 
 [1] X. Zhu, S. Chen, F. Zhang, Y. Shi, and Y. Wang. Globalbuildingatlas: an open global and complete dataset of building polygons, heights and lod1 3d models. Earth
 System Science Data, 17(12):6647–6668, 2025
+
 [2] multiphysics Aerodynamicshen Institut Aachen (m-AIA), https://m-aia-aia-m-aia-60defb05e8a289b7b7c07554d8d66f6c0373baacfa2d23b.pages.rwth-aachen.de
+
 [3] A. Lintermann et al.: Massively parallel grid generation on HPC systems, Computer Methods in Applied Mechanics and Engineering, 277:131–153, 2014.
+
 [4] M. Gondrum et al.: Porous fairings for landing gear noise mitigation, Proceedings of the 30th AIAA/CEAS Aeroacoustics Conference, 2024.
+
 [5] P. Thörnig: JURECA: Data Centric and Booster Modules implementing the Modular Supercomputing Architecture at Jülich Supercomputing Centre, Journal of large-scale research facilities, 7(A182), 2021.
