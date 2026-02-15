@@ -65,10 +65,10 @@ w_max = 1.5    # Max aspect ratio for towers
 # Roads
 [roads]
 r = 10         # Road width
-rh_min = 3     # Min number of horizontal roads
-rh_max = 8     # Max number of horizontal roads
-rv_min = 3     # Min number of vertical roads
-rv_max = 8     # Max number of vertical roads
+rh_min = 2     # Min number of horizontal roads
+rh_max = 5     # Max number of horizontal roads
+rv_min = 2     # Min number of vertical roads
+rv_max = 5     # Max number of vertical roads
 
 ## GRID GENERATOR m-AIA
 [grid_mAIA]
@@ -84,17 +84,17 @@ z_incr = 6
 
 ## SIMULATION m-AIA
 [sim_mAIA]
-tau = 800000
+tau = 700000
 Re = 9300
 tau_re_start = 1000
 Delta_tau_re = 50000
-Delta_tau_s = 100000
+Delta_tau_s = 800000
 Delta_tau_r = 100000
 RESTART = false
 tau_r = 300000
 TIME-AVERAGING = true
 tau_a_start = 300000
-tau_a_stop = 800000
-Delta_tau_a = 25
+tau_a_stop = 700000
+Delta_tau_a = 2000
 RESET = true
-MONITOR = true
+MONITOR = false
