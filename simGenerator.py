@@ -125,5 +125,5 @@ properties = {
 with open("properties_run.toml", "w") as f:
     toml.dump(properties, f)
 
-print("✅ properties_run.toml written in structured TOML format.")
+print("properties_run.toml written in structured TOML format.")
 

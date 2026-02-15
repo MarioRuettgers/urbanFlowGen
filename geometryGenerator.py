@@ -432,10 +432,10 @@ with open(os.path.join(stl_path,f'{sample_id}_metadata.json'), 'w') as f:
     json.dump(metadata, f, indent=4)
 
 # --- 10. Summary info ---
-print(f"✅ Plane mesh saved to: {plane_filename}")
-print(f"✅ Buildings mesh saved to: {buildings_filename}")
-print(f"📄 Metadata saved: {sample_id}_metadata.json")
-print(f"🏙 Buildings: {len(cylinders)} | Rotation: {angle_deg:.2f}°")
+print(f"Plane mesh saved to: {plane_filename}")
+print(f"Buildings mesh saved to: {buildings_filename}")
+print(f"Metadata saved: {sample_id}_metadata.json")
+print(f"Buildings: {len(cylinders)} | Rotation: {angle_deg:.2f}°")
 
 # --- 11. Generate "geometry.toml" ---
 def generate_geometry_toml(x: int, output_file: str = "geometry.toml"):
@@ -496,6 +496,6 @@ def generate_geometry_toml(x: int, output_file: str = "geometry.toml"):
     with open(os.path.join(geometry_path,output_file), "w") as f:
         toml.dump(geometry, f)
 
-    print(f"✅ geometry.toml generated (x = {x})")
+    print(f"geometry.toml generated (x = {x})")
 
 generate_geometry_toml(x=sample_id)

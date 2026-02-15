@@ -23,16 +23,16 @@ is_integer() {
 ask_for_range() {
     read -p "Enter the minimum integer value: " min
     while ! is_integer "$min"; do
-        echo "❌ Invalid input. Please enter an integer."
+        echo "Invalid input. Please enter an integer."
         read -p "Enter the minimum integer value: " min
     done
 
     read -p "Enter the maximum integer value: " max
     while ! is_integer "$max" || [ "$max" -lt "$min" ]; do
         if ! is_integer "$max"; then
-            echo "❌ Invalid input. Please enter an integer."
+            echo "Invalid input. Please enter an integer."
         else
-            echo "❌ Maximum must be greater than or equal to minimum ($min)."
+            echo "Maximum must be greater than or equal to minimum ($min)."
         fi
         read -p "Enter the maximum integer value: " max
     done
@@ -52,20 +52,20 @@ generate_case() {
     local STL_FOLDER="$TARGET_FOLDER/stl"
     local OUT_FOLDER="$TARGET_FOLDER/out"
 
-    echo -e "\n🚧 Starting case: $i"
+    echo -e "\nStarting case: $i"
 
     create_folder_if_missing "$STL_FOLDER"
     create_folder_if_missing "$OUT_FOLDER"
 
     # Geometry generation
-    python "$GEOMETRY_SCRIPT" "$i" || { echo "❌ Geometry generation failed for $i"; return 1; }
+    python "$GEOMETRY_SCRIPT" "$i" || { echo "Geometry generation failed for $i"; return 1; }
 
     # Grid properties
-    python "$GRID_SCRIPT" "$i" || { echo "❌ Grid generation failed for $i"; return 1; }
+    python "$GRID_SCRIPT" "$i" || { echo "Grid generation failed for $i"; return 1; }
     mv properties_grid.toml "$TARGET_FOLDER"
 
     # Simulation properties
-    python "$SIM_SCRIPT" || { echo "❌ Simulation generation failed for $i"; return 1; }
+    python "$SIM_SCRIPT" || { echo "Simulation generation failed for $i"; return 1; }
     mv properties_run.toml "$TARGET_FOLDER"
 
     # Copy SLURM scripts
@@ -77,9 +77,9 @@ generate_case() {
         sed -i "s/^#SBATCH --job-name=.*/#SBATCH --job-name=$i/" "$SLURM_SCRIPT_RUN"
         jobid=$(sbatch "$SLURM_SCRIPT_GRID" | awk '{print $4}')
         sbatch --dependency=afterok:$jobid "$SLURM_SCRIPT_RUN"
-        echo "✅ Submitted SLURM jobs for case $i (grid → run)"
+        echo "Submitted SLURM jobs for case $i (grid → run)"
     else
-        echo "❌ Missing $SLURM_SCRIPT_RUN in $TARGET_FOLDER"
+        echo "Missing $SLURM_SCRIPT_RUN in $TARGET_FOLDER"
     fi
     cd - >/dev/null
 }
