@@ -6,6 +6,8 @@
 source ./venv/bin/activate
 
 # Scripts
+GEOMETRY_SCRIPT="./geometryGenerator_realCity.py"
+#GEOMETRY_SCRIPT="./geometryGenerator.py"
 GEOMETRY_SCRIPT="./geometryGenerator.py"
 GRID_SCRIPT="./gridGenerator.py"
 SIM_SCRIPT="./simGenerator.py"
