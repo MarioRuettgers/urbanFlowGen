@@ -3,3 +3,10 @@ trimesh
 shapely
 mapbox-earcut manifold3d
 toml
+
+##### For real-city urbanFlowGen
+overturemaps
+pyproj
+geopandas
+owslib
+requests
