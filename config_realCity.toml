@@ -1,0 +1,152 @@
+# Real-city geometry configuration for urbanFlowGen
+
+[settings]
+# Active city selection (key name from cities section)
+# Single city: active_cities = ["Seoul"]
+# Multiple cities: active_cities = ["Seoul", "NewYork_Manhattan", "Tokyo"]
+active_cities = ["Incheon_Songdo"]
+#active_cities = ["Seoul_Gangnam", "NewYork_Manhattan", "Busan_Haeundae", "Tokyo"]
+
+# Data source selection
+# "overture_simple" - Simple approach (OSMGenerator style)
+# "overture_geopandas" - GeoDataFrame approach (AtlasGenerator style, more stable)
+# "global_building_atlas" - Global Building Atlas via WFS (satellite-derived heights)
+#                            Note: Server may be under maintenance. Auto-fallback to Overture Maps enabled.
+#data_source = "overture_simple"
+data_source = "overture_geopandas"
+#data_source = "global_building_atlas"
+
+# Circular domain radius (meters)
+# This value × 2 = diameter of the urban area to collect
+# Example: 500m → diameter 1000m (1km × 1km circular area)
+collection_radius_meters = 200
+
+# Building height handling when no height data available
+# 0 = Exclude buildings without height data (flat ground)
+# Number = Use as default height in meters (e.g., 15.0)
+default_height = 2.0
+
+# ==========================================
+# Exact Location Mode (Optional)
+# ==========================================
+# Enable this to use a specific lat/lon instead of random sampling
+use_exact_location = true
+
+[exact_location]
+# Specify exact coordinates when use_exact_location = true
+# This will override random sampling from active_cities
+
+latitude = 37.39755           
+longitude = 126.641539       
+# utm_zone = 52                # Optional: Auto-calculated from longitude if not provided
+description = "SONGDO"
+
+# ==========================================
+# Global Building Atlas WFS Configuration
+# ==========================================
+[global_building_atlas]
+wfs_url = "https://tubvsig-so2sat-vm1.srv.mwn.de/geoserver/ows"
+# Possible layer names (check GetCapabilities for exact names):
+# - gba:GBA_Polygon (CC BY-NC 4.0 polygons with height)
+# - gba:GBA_ODbLPolygon (ODbL licensed polygons)
+# - gba:GBA_LoD1 (LoD1 3D models)
+layer_name = "gba:GBA_Polygon"
+version = "2.0.0"
+# CRS: Global Building Atlas uses EPSG:3857 (Web Mercator)
+crs = "EPSG:3857"
+# Height field names
+height_field = "height"
+variance_field = "var"  # Uncertainty/variance (optional)
+
+# ==========================================
+# City Presets
+# ==========================================
+
+[cities.Seoul]
+name = "Seoul Metropolitan Area"
+center_lat = 37.5665      # Seoul City Hall reference
+center_lon = 126.9780
+sampling_radius_km = 20.0  # Random sampling radius (20km)
+utm_zone = 52              # UTM Zone 52N (Korea)
+description = "Entire Seoul (Gangnam, Jongno, Gangbuk, Songpa, etc.)"
+
+[cities.Seoul_Gangnam]
+name = "Seoul Gangnam District"
+center_lat = 37.4979      # Gangnam Station reference
+center_lon = 127.0276
+sampling_radius_km = 5.0   # 5km radius from Gangnam center
+utm_zone = 52
+description = "High-rise building dense area near Gangnam Station"
+
+[cities.Seoul_Jongno]
+name = "Seoul Jongno District"
+center_lat = 37.5665      # Jongno District
+center_lon = 126.9780
+sampling_radius_km = 3.0
+utm_zone = 52
+description = "Mix of traditional and modern buildings in Jongno"
+
+[cities.Incheon_Songdo]
+name = "Incheon Songdo International City"
+
+center_lat = 37.388304
+center_lon =  126.654289
+sampling_radius_km = 2.6  # Total area coverage ~53.4 km²
+utm_zone = 52
+description = "Songdo International Business District, planned smart city"
+
+[cities.NewYork]
+name = "New York City"
+center_lat = 40.7128      # NYC center
+center_lon = -74.0060
+sampling_radius_km = 15.0  # Includes Manhattan, Brooklyn, etc.
+utm_zone = 18              # UTM Zone 18N (New York)
+description = "Entire New York City"
+
+[cities.NewYork_Manhattan]
+name = "New York Manhattan"
+center_lat = 40.7589      # Times Square
+center_lon = -73.9851
+sampling_radius_km = 5.0
+utm_zone = 18
+description = "Manhattan central area"
+
+[cities.Busan]
+name = "Busan Metropolitan City"
+center_lat = 35.1796      # Busan City Hall
+center_lon = 129.0756
+sampling_radius_km = 10.0
+utm_zone = 52
+description = "Entire Busan"
+
+[cities.Busan_Haeundae]
+name = "Busan Haeundae"
+center_lat = 35.1584      # Haeundae Beach
+center_lon = 129.1604
+sampling_radius_km = 3.0
+utm_zone = 52
+description = "High-rise apartment area near Haeundae Beach"
+
+[cities.Tokyo]
+name = "Tokyo Metropolitan Area"
+center_lat = 35.6762      # Tokyo Station
+center_lon = 139.6503
+sampling_radius_km = 20.0
+utm_zone = 54              # UTM Zone 54N (Japan)
+description = "Entire Tokyo"
+
+[cities.London]
+name = "London"
+center_lat = 51.5074      # London center
+center_lon = -0.1278
+sampling_radius_km = 15.0
+utm_zone = 30              # UTM Zone 30N (UK)
+description = "Entire London"
+
+[cities.Paris]
+name = "Paris"
+center_lat = 48.8566      # Paris center
+center_lon = 2.3522
+sampling_radius_km = 10.0
+utm_zone = 31              # UTM Zone 31N (France)
+description = "Entire Paris"
