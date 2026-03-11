@@ -1,0 +1,114 @@
+solid Visualization Toolkit generated SLA File
+ facet normal 0 0 -1
+  outer loop
+   vertex -700 -250 -300
+   vertex -700 -10 -300
+   vertex -580 -10 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -580 -10 -300
+   vertex -580 -250 -300
+   vertex -700 -250 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -580 -10 -300
+   vertex -560 -250 -300
+   vertex -580 -250 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -580 -10 -300
+   vertex -560 -10 -300
+   vertex -560 -250 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -560 -10 -300
+   vertex  600 -10 -300
+   vertex  600 -250 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex  600 -250 -300
+   vertex -560 -250 -300
+   vertex -560 -10 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -560 -10 -300
+   vertex  600   10 -300
+   vertex  600 -10 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -560 -10 -300
+   vertex -560  10 -300
+   vertex  600  10 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -560  10 -300
+   vertex  600  250 -300
+   vertex  600  10 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -560  10 -300
+   vertex -560  250 -300
+   vertex  600  250 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -560  10 -300
+   vertex -580  250 -300
+   vertex -560  250 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -560  10 -300
+   vertex -580  10 -300
+   vertex -580  250 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -580  10 -300
+   vertex -700  250 -300
+   vertex -580  250 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -580  10 -300
+   vertex -700  10 -300
+   vertex -700  250 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -580  10 -300
+   vertex -700  -10 -300
+   vertex -700  10 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -580  10 -300
+   vertex -580  -10 -300
+   vertex -700  -10 -300
+  endloop
+ endfacet
+endsolid

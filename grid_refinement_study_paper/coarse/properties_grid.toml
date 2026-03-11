@@ -1,0 +1,66 @@
+
+# -------------- APPLICATION SETTINGS  --------------
+
+  gridGenerator         = true
+  flowSolver            = false
+  nDim                  = 3
+  noSolvers             = 2
+  scratchSize           = 20.0
+
+# -------------- APPLICATION ENVIRONMENT  --------------
+
+ outputDir             = "out/"
+ gridInputFileName     = "grid.Netcdf"
+ gridOutputFileName    = "grid.Netcdf"
+
+
+# -------------- NUMERICAL PROPERTIES --------------
+ 
+ multiSolverGrid  = true
+ multiSolver      = true
+ noHaloLayers    = 1
+
+ #zone_blocks.first = 0
+
+# -------------- GRID AND REFINEMENT PROPERTIES --------------
+
+ reductionFactor                 = 1.06666666667
+
+ minLevel                        = 8
+ maxUniformRefinementLevel       = 8
+ maxRfnmntLvl                    = 12
+ maxBoundaryRfnLvl               = 12
+
+ localRfnMethod                    = 1         # 0 no, 1 patch only, 2 boundary only, 3 both
+ localRfnBoundaryIds               = [9]       # Ids of boundaries that are refined
+
+ localBndRfnMethod = 2
+
+ smoothDistance                    = [20]      # number of cells used at least
+ localMinBoundaryThreshold         = [4]      #
+ localBndRfnDistance = [20.0]      #
+
+ #-patch refinment
+localRfnLvlMethods       = "BB-BB-BB-BB"
+localRfnLevelProperties  = [
+  -793.75,-306.25,-300.0, 693.75, 306.25, -243.75,	# 10, 6, 0, 10, 6, 6
+  -765.0,-72.5,-300.0, -185.0, 72.5, -177.5,  		# 0, 6, 0, 10, 6, 6
+  -743.75,-276.25,-300.0, 643.75, 276.25, -273.75,	# 10, 6, 0, 10, 6, 6
+  -665.0,-42.5,-300.0, -285.0, 42.5, -207.5,  		# 0, 6, 0, 10, 6, 6
+  -718.75,-261.25,-300.0, 618.75, 261.25, -288.75,	# 10, 6, 0, 10, 6, 6 
+  -615.0,-27.5,-300.0, -335.0, 27.5, -222.5,  		# 0, 6, 0, 10, 6, 6
+  -706.25,-253.75,-300.0, 606.25, 253.75, -296.25, 	# 138, 390, 0, 1866, 390, 10
+  -590.0,-20.0,-300.0, -360.0, 20.0, -230.0 		# 0, 16, 0, 320, 16, 16
+]
+
+
+ maxNoCells                      = 300000000
+ partitionCellOffspringThreshold = 50000000
+
+ [solver.0]
+
+ geometryInputFileName   = "geometry.toml"
+
+ [solver.1]
+
+ geometryInputFileName   = "geometry.toml"

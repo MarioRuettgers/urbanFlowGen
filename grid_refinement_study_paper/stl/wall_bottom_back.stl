@@ -1,0 +1,16 @@
+solid Visualization Toolkit generated SLA File
+ facet normal 0 0 -1
+  outer loop
+   vertex 600 600 -300
+   vertex 1200 600 -300
+   vertex 1200 -600 -300
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex 1200 -600 -300
+   vertex 600 -600 -300
+   vertex 600 600 -300
+  endloop
+ endfacet
+endsolid

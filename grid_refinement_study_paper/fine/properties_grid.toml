@@ -1,0 +1,68 @@
+
+# -------------- APPLICATION SETTINGS  --------------
+
+  gridGenerator         = true
+  flowSolver            = false
+  nDim                  = 3
+  noSolvers             = 2
+  scratchSize           = 20.0
+
+# -------------- APPLICATION ENVIRONMENT  --------------
+
+ outputDir             = "out/"
+ gridInputFileName     = "grid.Netcdf"
+ gridOutputFileName    = "grid.Netcdf"
+
+
+# -------------- NUMERICAL PROPERTIES --------------
+ 
+ multiSolverGrid  = true
+ multiSolver      = true
+ noHaloLayers    = 1
+
+ #zone_blocks.first = 0
+
+# -------------- GRID AND REFINEMENT PROPERTIES --------------
+
+ reductionFactor                 = 1.06666666667
+
+ minLevel                        = 8
+ maxUniformRefinementLevel       = 8
+ maxRfnmntLvl                    = 13
+ maxBoundaryRfnLvl               = 13
+
+ localRfnMethod                    = 1         # 0 no, 1 patch only, 2 boundary only, 3 both
+ localRfnBoundaryIds               = [9]       # Ids of boundaries that are refined
+
+ localBndRfnMethod = 2
+
+ smoothDistance                    = [20]      # number of cells used at least
+ localMinBoundaryThreshold         = [4]      #
+ localBndRfnDistance = [20.0]      #
+
+ #-patch refinment
+localRfnLvlMethods       = "BB-BB-BB-BB-BB"
+localRfnLevelProperties  = [
+  -796.875,-308.125,-300.0, 693.75, 308.125, -241.875,	# 10, 6, 0, 10, 6, 6
+  -770.0,-77.5,-300.0, -185.0, 77.5, -172.5,  		# 0, 6, 0, 10, 6, 6
+  -746.875,-278.125,-300.0, 643.75, 278.125, -271.875,	# 10, 6, 0, 10, 6, 6
+  -670.0,-47.5,-300.0, -285.0, 47.5, -202.5,  		# 0, 6, 0, 10, 6, 6
+  -721.875,-263.125,-300.0, 618.75, 263.125, -286.875,	# 10, 6, 0, 10, 6, 6 
+  -620.0,-32.5,-300.0, -335.0, 32.5, -217.5,  		# 0, 6, 0, 10, 6, 6
+  -709.375,-255.625,-300.0, 606.25, 255.625, -294.375, 	# 138, 390, 0, 1866, 390, 10
+  -595.0,-25.0,-300.0, -360.0, 25.0, -225.0, 		# 0, 16, 0, 320, 16, 16
+  -703.125,-251.875,-300.0, 603.125, 251.875, -298.125, 	# 138, 390, 0, 1866, 390, 10
+  -585.0,-15.0,-300.0, -555.0, 15.0, -235.0 		# 0, 16, 0, 16, 16, 16
+]
+
+
+ maxNoCells                      = 300000000
+ partitionCellOffspringThreshold = 50000000
+
+ [solver.0]
+
+ geometryInputFileName   = "geometry.toml"
+
+ [solver.1]
+
+ geometryInputFileName   = "geometry.toml"
