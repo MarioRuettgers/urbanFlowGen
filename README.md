@@ -5,6 +5,11 @@ urbanFlowGen is an open-source Python library for generating synthetic urban Com
 - Step 2: Creating property files for generating computational meshes using open-source grid generation tools,
 - Step 3: Creating property files for setting up CFD simulations for both CPU- and GPU-based solvers.
 
+
+This figure illustrates the complete workflow: 
+
+![workflow](workflow.jpg)
+
 The library is modular and extensible, making it easy to integrate with custom solvers or simulation workflows. It is designed to support researchers and practitioners working on data-driven urban flow modeling, offering a scalable solution for producing diverse and physically realistic training datasets.
 
 When executing the bash script "virtualEnv.sh", a Python virtual environment is created, the modules listed in "requirements.txt" are installed with pip, and the virtual environment is activated. The directory of the virtual environment can be adjusted in "VENV_DIR=...".
@@ -26,10 +31,6 @@ Steps 2 and 3 are demonstrated for a use cases with the open source simulation f
 Step 2, generating property files for grid generation, executes the file "gridGenerator.py". The parameters include user-defined global and local grid refinement. Further information about the m-AIA grid generator can be found in [4].
 
 Step 3, generating property files for simulating, uses the cumulant lattice Boltzmann (CLB) module of m-AIA to simulate high-Reynolds-number urban airflow. The CLB method offers enhanced stability and accuracy over traditional BGK or MRT schemes by relaxing cumulants instead of moments, making it ideal for capturing turbulence, vortex shedding, and complex near-wall dynamics in city-scale CFD. Simulations are configured via the "properties_run.toml" property file generated using urbanFlowGen, which includes settings for time-stepping, ramped Reynolds number initialization, restart control, and time-averaged output. Optional monitoring of flow quantities at inlet/outlet can aid early-stage validation. Further details about the CLB method are provided in [5].
-
-This figure illustrates the complete workflow: 
-
-![workflow](workflow.jpg)
 
 UrbanFlowGen is executed with the bash script "urbanFlowGen.sh". The user needs to comment in one of the two geometry generator files. After this, the script automates the generation and submission of multiple urban flow simulation cases. For each case within a user-defined integer range (case IDs), the script:
 
