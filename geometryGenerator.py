@@ -62,11 +62,11 @@ l_max  = params['rectangular']['l_max']
 a_max  = params['rectangular']['a_max']
 
 # Extreme buildings
-E      = params['extreme']['E']
+P_E      = params['extreme']['P_E']
 e_max  = params['extreme']['e_max']
 
 # Circular buildings
-C      = params['circular']['C']
+P_C      = params['circular']['P_C']
 d_min  = params['circular']['d_min']
 d_max  = params['circular']['d_max']
 phi    = params['circular']['phi']
@@ -76,7 +76,7 @@ h_min  = params['height']['h_min']
 h_max  = params['height']['h_max']
 
 # Towers
-T      = params['towers']['T']
+P_T      = params['towers']['P_T']
 t_min  = params['towers']['t_min']
 t_max  = params['towers']['t_max']
 s_min  = params['towers']['s_min']
@@ -85,10 +85,10 @@ w_max  = params['towers']['w_max']
 
 # Roads
 r       = params['roads']['r']
-rh_min  = params['roads']['rh_min']
-rh_max  = params['roads']['rh_max']
-rv_min  = params['roads']['rv_min']
-rv_max  = params['roads']['rv_max']
+rx_min  = params['roads']['rx_min']
+rx_max  = params['roads']['rx_max']
+ry_min  = params['roads']['ry_min']
+ry_max  = params['roads']['ry_max']
 
 def make_patch(v0, v1, v2, v3):
     """Create a rectangular patch mesh from four corner vertices."""
@@ -224,8 +224,8 @@ outer = Polygon([
 # --- 3. Generate random road network ---
 def generate_random_roads(x_min_VII, x_max_VII, y_min_VII, y_max_VII, r):
     global num_vertical_roads, num_horizontal_roads
-    num_vertical_roads = np.random.randint(rv_min, rv_max)
-    num_horizontal_roads = np.random.randint(rh_min, rh_max)
+    num_vertical_roads = np.random.randint(ry_min, ry_max)
+    num_horizontal_roads = np.random.randint(rx_min, rx_max)
 
     vertical_positions = np.sort(np.random.uniform(x_min_VII + sd_x_neg, x_max_VII - sd_x_pos, num_vertical_roads))
     horizontal_positions = np.sort(np.random.uniform(y_min_VII + sd_y, y_max_VII - sd_y, num_horizontal_roads))
@@ -249,13 +249,13 @@ road_union = unary_union(rotated_roads)
 # --- 4. Generate building footprints ---
 def random_building_footprint():
     shape = 'rect'
-    if np.random.rand() < C:
+    if np.random.rand() < P_C:
         diameter = np.random.uniform(d_min, d_max)
         height = np.random.uniform(h_min, h_max)
         shape = 'circle'
         return diameter, diameter, height, shape
 
-    if np.random.rand() < T:
+    if np.random.rand() < P_T:
         for _ in range(100):
             w = np.random.uniform(t_min, t_max)
             h = np.random.uniform(t_min, t_max)
@@ -267,7 +267,7 @@ def random_building_footprint():
             w = np.random.uniform(l_min, l_max)
             h = np.random.uniform(l_min, l_max)
             aspect = max(w / h, h / w)
-            limit = e_max if np.random.rand() < E else a_max
+            limit = e_max if np.random.rand() < P_E else a_max
             if aspect <= limit:
                 height = np.random.uniform(h_min, h_max)
                 return w, h, height, shape
@@ -404,22 +404,22 @@ metadata = {
     "bounds_for_nr_of_buildings": [b_min, b_max],
     "building_count": len(cylinders),
     "rectangular_building_size_range": [l_min, l_max],
-    "extreme_aspect_chance": E,
+    "extreme_aspect_chance": P_E,
     "aspect_ratio_limits_rectangular_buildings": {
         "normal_max": a_max,
         "extreme_max": e_max
     },
-    "circle_chance": C,
+    "circle_chance": P_C,
     "circular_building_size_range": [d_min, d_max],
     "circle_resolution": phi,
     "building_height_range": [h_min, h_max],
-    "tower_chance": T,
+    "tower_chance": P_T,
     "tower_size_range": [t_min, t_max],
     "tower_height_range": [s_min, s_max],
     "tower_max_aspect_ratio": w_max,
     "road_width": r,
-    "bounds_for_nr_of_horizontal_roads": [rh_min, rh_max],
-    "bounds_for_nr_of_vertical_roads": [rv_min, rv_max],
+    "bounds_for_nr_of_horizontal_roads": [rx_min, rx_max],
+    "bounds_for_nr_of_vertical_roads": [ry_min, ry_max],
     "vertical_road_count": num_vertical_roads,
     "horizontal_road_count": num_horizontal_roads,
     "building_shapes": shapes,

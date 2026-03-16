@@ -38,12 +38,12 @@ a_max = 2.5  # Max aspect ratio for normal buildings
 
 # Extreme rectangular buildings
 [extreme]
-E = 0.15     # Probability for extreme building
+P_E = 0.15     # Probability for extreme building
 e_max = 5.0  # Max aspect ratio for extreme buildings
 
 # Circular buildings
 [circular]
-C = 0.05     # Probability for circular building
+P_C = 0.05     # Probability for circular building
 d_min = 10   # Min diameter
 d_max = 80   # Max diameter
 phi = 32     # Circumferential resolution
@@ -55,7 +55,7 @@ h_max = 80   # Maximum height
 
 # Towers
 [towers]
-T = 0.07       # Probability for tower
+P_T = 0.07       # Probability for tower
 t_min = 50     # Min edge length of tower base
 t_max = 100    # Max edge length
 s_min = 80     # Min tower height
@@ -65,10 +65,10 @@ w_max = 1.5    # Max aspect ratio for towers
 # Roads
 [roads]
 r = 10         # Road width
-rh_min = 2     # Min number of horizontal roads
-rh_max = 5     # Max number of horizontal roads
-rv_min = 2     # Min number of vertical roads
-rv_max = 5     # Max number of vertical roads
+rx_min = 2     # Min number of horizontal roads
+rx_max = 5     # Max number of horizontal roads
+ry_min = 2     # Min number of vertical roads
+ry_max = 5     # Max number of vertical roads
 
 ## GRID GENERATOR m-AIA
 [grid_mAIA]
