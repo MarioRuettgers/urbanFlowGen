@@ -29,7 +29,7 @@ Step 3, generating property files for simulating, uses the cumulant lattice Bolt
 
 This figure illustrates the complete workflow:
 
-Open the figure: [workflow](graphical_abstract.pdf)
+Open the figure: ![workflow](graphical_abstract.pdf)
 
 UrbanFlowGen is executed with the bash script "urbanFlowGen.sh". The user needs to comment in one of the two geometry generator files. After this, the script automates the generation and submission of multiple urban flow simulation cases. For each case within a user-defined integer range (case IDs), the script:
 
