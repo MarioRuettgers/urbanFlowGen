@@ -8,7 +8,7 @@ urbanFlowGen is an open-source Python library for generating synthetic urban Com
 
 This figure illustrates the complete workflow: 
 
-![workflow](workflow.jpg)
+![workflow](figures/workflow.jpg)
 
 The library is modular and extensible, making it easy to integrate with custom solvers or simulation workflows. It is designed to support researchers and practitioners working on data-driven urban flow modeling, offering a scalable solution for producing diverse and physically realistic training datasets.
 
