@@ -27,6 +27,10 @@ Step 2, generating property files for grid generation, executes the file "gridGe
 
 Step 3, generating property files for simulating, uses the cumulant lattice Boltzmann (CLB) module of m-AIA to simulate high-Reynolds-number urban airflow. The CLB method offers enhanced stability and accuracy over traditional BGK or MRT schemes by relaxing cumulants instead of moments, making it ideal for capturing turbulence, vortex shedding, and complex near-wall dynamics in city-scale CFD. Simulations are configured via the "properties_run.toml" property file generated using urbanFlowGen, which includes settings for time-stepping, ramped Reynolds number initialization, restart control, and time-averaged output. Optional monitoring of flow quantities at inlet/outlet can aid early-stage validation. Further details about the CLB method are provided in [5].
 
+This figure illustrates the complete workflow:
+
+[workflow figure](figures/graphical_abstract.pdf)
+
 UrbanFlowGen is executed with the bash script "urbanFlowGen.sh". The user needs to comment in one of the two geometry generator files. After this, the script automates the generation and submission of multiple urban flow simulation cases. For each case within a user-defined integer range (case IDs), the script:
 
     - Activates a Python virtual environment.
