@@ -10,3 +10,6 @@ pyproj
 geopandas
 owslib
 requests
+fsspec
+aiohttp
+duckdb

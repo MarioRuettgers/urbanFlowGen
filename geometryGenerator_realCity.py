@@ -43,6 +43,11 @@ except ImportError:
     WFS_AVAILABLE = False
     print(" Warning: owslib not available. Global Building Atlas mode disabled.")
 
+
+def is_geodataframe(obj):
+    """Safely detect GeoDataFrame objects when geopandas is optional."""
+    return GEOPANDAS_AVAILABLE and isinstance(obj, gpd.GeoDataFrame)
+
 # ========================================
 # CONFIGURATION LOADING
 # ========================================
@@ -62,6 +67,8 @@ parser.add_argument('--lon', '--longitude', type=float, default=None,
                     help='Exact longitude (overrides config)')
 parser.add_argument('--utm-zone', type=int, default=None,
                     help='UTM zone (optional, auto-calculated from longitude if not provided)')
+parser.add_argument('--city', type=str, default=None,
+                    help='Randomly sample within one configured city (overrides active_cities and exact-location config)')
 
 args = parser.parse_args()
 sample_id = args.sample_id
@@ -218,9 +225,9 @@ def sample_location_in_city(force_lat=None, force_lon=None, force_utm_zone=None)
             print(f" Lat: {force_lat}, Lon: {force_lon}, UTM Zone: {force_utm_zone}")
         return force_lat, force_lon, "CommandLine_Custom", force_utm_zone
 
-    # Priority 2: Config file exact location
+    # Priority 2: Config file exact location. --city explicitly requests random sampling.
     use_exact = city_config['settings'].get('use_exact_location', False)
-    if use_exact:
+    if use_exact and args.city is None:
         exact_config = city_config.get('exact_location', {})
         exact_lat = exact_config.get('latitude')
         exact_lon = exact_config.get('longitude')
@@ -246,7 +253,10 @@ def sample_location_in_city(force_lat=None, force_lon=None, force_utm_zone=None)
 
     # Priority 3: Random sampling (original behavior)
     # Get list of active cities
-    active_cities = city_config['settings']['active_cities']
+    active_cities = [args.city] if args.city else city_config['settings']['active_cities']
+    unknown_cities = [name for name in active_cities if name not in city_config['cities']]
+    if unknown_cities:
+        raise ValueError(f"Unknown city preset(s): {', '.join(unknown_cities)}")
 
     # Randomly select one city from the list
     city_name = np.random.choice(active_cities)
@@ -291,13 +301,103 @@ def calculate_bbox_for_circle(lat, lon, radius_m):
     return bbox
 
 
+def is_exact_location_mode():
+    """Return True when generation should use one fixed location."""
+    return (
+        (args.lat is not None and args.lon is not None)
+        or (args.city is None and city_config['settings'].get('use_exact_location', False))
+    )
+
+
+_OVERTURE_STAC_CACHE = {}
+_OVERTURE_DATASET_CACHE = {}
+
+
+def fetch_overture_records(bbox):
+    """Read only intersecting Overture building rows over HTTPS range requests."""
+    import io
+
+    import fsspec
+    import pyarrow.compute as pc
+    import pyarrow.dataset as ds
+    import pyarrow.fs as pa_fs
+    import pyarrow.parquet as pq
+
+    release = city_config['settings'].get('overture_release')
+    if not release:
+        catalog = requests.get(
+            'https://stac.overturemaps.org/catalog.json', timeout=30
+        )
+        catalog.raise_for_status()
+        release = catalog.json()['latest']
+
+    if release not in _OVERTURE_STAC_CACHE:
+        index_url = f'https://stac.overturemaps.org/{release}/collections.parquet'
+        response = requests.get(index_url, timeout=30)
+        response.raise_for_status()
+        _OVERTURE_STAC_CACHE[release] = pq.read_table(io.BytesIO(response.content))
+
+    xmin, ymin, xmax, ymax = bbox
+    bbox_filter = (
+        (pc.field('collection') == 'building')
+        & (pc.field('type') == 'Feature')
+        & (pc.field('bbox', 'xmin') < xmax)
+        & (pc.field('bbox', 'xmax') > xmin)
+        & (pc.field('bbox', 'ymin') < ymax)
+        & (pc.field('bbox', 'ymax') > ymin)
+    )
+    rows = _OVERTURE_STAC_CACHE[release].filter(bbox_filter).to_pylist()
+    urls = []
+    for row in rows:
+        assets = row['assets']
+        asset = assets.get('aws') or assets.get('azure')
+        if asset:
+            urls.append(asset['href'])
+
+    if not urls:
+        return []
+
+    dataset_key = tuple(urls)
+    if dataset_key not in _OVERTURE_DATASET_CACHE:
+        http_fs = pa_fs.PyFileSystem(
+            pa_fs.FSSpecHandler(fsspec.filesystem('http'))
+        )
+        _OVERTURE_DATASET_CACHE[dataset_key] = ds.dataset(
+            urls, filesystem=http_fs, format='parquet'
+        )
+
+    table = _OVERTURE_DATASET_CACHE[dataset_key].to_table(
+        filter=(
+            (pc.field('bbox', 'xmin') < xmax)
+            & (pc.field('bbox', 'xmax') > xmin)
+            & (pc.field('bbox', 'ymin') < ymax)
+            & (pc.field('bbox', 'ymax') > ymin)
+        ),
+        columns=['geometry', 'height', 'num_floors'],
+    )
+    return table.to_pylist()
+
+
+def resolve_overture_height(record):
+    """Prefer explicit height, then explicit floor count, then configured default."""
+    height = record.get('height')
+    if height is not None and height > 0:
+        return float(height), True, 'height'
+
+    num_floors = record.get('num_floors')
+    if num_floors is not None and num_floors > 0:
+        meters_per_floor = float(city_config['settings'].get('meters_per_floor', 3.5))
+        return float(num_floors) * meters_per_floor, True, 'num_floors'
+
+    return float(city_config['settings']['default_height']), False, 'default'
+
+
 def fetch_buildings_simple(bbox, utm_zone):
     """Fetch buildings using simple Overture Maps approach"""
     print("   📡 Fetching building data (simple mode)...")
     
     try:
-        table = overturemaps.record_batch_reader("building", bbox).read_all()
-        data = table.to_pylist()
+        data = fetch_overture_records(bbox)
     except Exception as e:
         print(f" Failed to fetch data: {e}")
         return None
@@ -313,18 +413,17 @@ def fetch_buildings_simple(bbox, utm_zone):
     for record in data:
         try:
             geom = from_wkb(record['geometry'])
-            height = record.get('height')
-            
-            # Skip if no height and default_height is 0
-            if (height is None or height == 0) and city_config['settings']['default_height'] == 0:
+            height, has_real_height, height_source = resolve_overture_height(record)
+
+            # Skip only buildings that still need a disabled (zero) default.
+            if not has_real_height and city_config['settings']['default_height'] == 0:
                 continue
-            
-            if height is None or height == 0:
-                height = city_config['settings']['default_height']
-            
+
             buildings.append({
                 'geometry': geom,
-                'height': float(height)
+                'height': height,
+                'has_real_height': has_real_height,
+                'height_source': height_source,
             })
         except Exception:
             continue
@@ -340,8 +439,7 @@ def fetch_buildings_geopandas(bbox, utm_zone):
     print(" Fetching building data (geopandas mode)...")
 
     try:
-        table = overturemaps.record_batch_reader("building", bbox).read_all()
-        data = table.to_pylist()
+        data = fetch_overture_records(bbox)
     except Exception as e:
         print(f" Failed to fetch data: {e}")
         return None
@@ -364,27 +462,39 @@ def fetch_buildings_geopandas(bbox, utm_zone):
     # Convert to GeoDataFrame and analyze height data
     geoms = []
     heights = []
+    has_real_heights = []
+    height_sources = []
     heights_with_data = 0
     heights_missing = 0
+    real_heights = []
 
     for r in data:
         geoms.append(from_wkb(r['geometry']))
-        h = r.get('height')
+        height, has_real_height, height_source = resolve_overture_height(r)
+        heights.append(height)
+        has_real_heights.append(has_real_height)
+        height_sources.append(height_source)
 
-        if h is not None and h > 0:
-            heights.append(float(h))
+        if has_real_height:
             heights_with_data += 1
+            real_heights.append(height)
         else:
-            heights.append(city_config['settings']['default_height'])
             heights_missing += 1
 
-    print(f" Height data: {heights_with_data} with real heights, {heights_missing} using default ({city_config['settings']['default_height']}m)")
+    print(f" Height data: {heights_with_data} with non-default heights, {heights_missing} using default ({city_config['settings']['default_height']}m)")
 
-    if heights_with_data > 0:
-        real_heights = [h for h in heights if h != city_config['settings']['default_height']]
+    if real_heights:
         print(f" Height range: {min(real_heights):.1f}m - {max(real_heights):.1f}m (avg: {sum(real_heights)/len(real_heights):.1f}m)")
 
-    gdf = gpd.GeoDataFrame({'height': heights}, geometry=geoms, crs="EPSG:4326")
+    gdf = gpd.GeoDataFrame(
+        {
+            'height': heights,
+            'has_real_height': has_real_heights,
+            'height_source': height_sources,
+        },
+        geometry=geoms,
+        crs="EPSG:4326"
+    )
 
     # Convert to UTM
     epsg = f"EPSG:326{utm_zone}" if utm_zone > 0 else f"EPSG:327{abs(utm_zone)}"
@@ -402,6 +512,114 @@ def fetch_buildings_geopandas(bbox, utm_zone):
     return gdf_utm
 
 
+def format_atlas_tile_coordinate(value, positive_prefix, negative_prefix, width):
+    """Format a signed 5-degree tile boundary used by the Atlas release."""
+    prefix = positive_prefix if value >= 0 else negative_prefix
+    return f"{prefix}{abs(int(value)):0{width}d}"
+
+
+def get_atlas_tile_urls(bbox):
+    """Return Source Cooperative Atlas tiles intersecting a lon/lat bbox."""
+    import math
+
+    xmin, ymin, xmax, ymax = bbox
+    west_start = math.floor(xmin / 5) * 5
+    east_end = math.floor((xmax - 1e-12) / 5) * 5
+    south_start = math.floor(ymin / 5) * 5
+    north_end = math.floor((ymax - 1e-12) / 5) * 5
+    base_url = city_config.get('global_building_atlas', {}).get(
+        'parquet_base_url',
+        'https://data.source.coop/tge-labs/globalbuildingatlas-lod1',
+    ).rstrip('/')
+
+    urls = []
+    for west in range(west_start, east_end + 1, 5):
+        for south in range(south_start, north_end + 1, 5):
+            east = west + 5
+            north = south + 5
+            filename = '_'.join([
+                format_atlas_tile_coordinate(west, 'e', 'w', 3),
+                format_atlas_tile_coordinate(north, 'n', 's', 2),
+                format_atlas_tile_coordinate(east, 'e', 'w', 3),
+                format_atlas_tile_coordinate(south, 'n', 's', 2),
+            ]) + '.parquet'
+            urls.append(f"{base_url}/{filename}")
+    return urls
+
+
+def fetch_buildings_atlas_parquet(bbox, utm_zone):
+    """Fetch Global Building Atlas rows from release Parquet tiles."""
+    if not GEOPANDAS_AVAILABLE:
+        raise ImportError("geopandas required for Global Building Atlas mode")
+
+    print(" Fetching building data from Global Building Atlas (Parquet)...")
+    try:
+        import duckdb
+
+        urls = get_atlas_tile_urls(bbox)
+        connection = duckdb.connect()
+        connection.execute("SET enable_progress_bar = false")
+        xmin, ymin, xmax, ymax = bbox
+        table = connection.execute(
+            """
+            SELECT geometry, height
+            FROM read_parquet(?)
+            WHERE bbox.xmin < ? AND bbox.xmax > ?
+              AND bbox.ymin < ? AND bbox.ymax > ?
+            """,
+            [urls, xmax, xmin, ymax, ymin],
+        ).to_arrow_table()
+        connection.close()
+        data = table.to_pylist()
+    except Exception as error:
+        print(f" Global Building Atlas Parquet query failed: {error}")
+        return None
+
+    if not data:
+        print(" No Global Building Atlas buildings found in this area")
+        return None
+
+    geoms = []
+    heights = []
+    has_real_heights = []
+    height_sources = []
+    for record in data:
+        try:
+            geoms.append(from_wkb(record['geometry']))
+            raw_height = record.get('height')
+            has_real_height = raw_height is not None and raw_height > 0
+            heights.append(
+                float(raw_height)
+                if has_real_height
+                else float(city_config['settings']['default_height'])
+            )
+            has_real_heights.append(has_real_height)
+            height_sources.append('height' if has_real_height else 'default')
+        except Exception:
+            continue
+
+    gdf = gpd.GeoDataFrame(
+        {
+            'height': heights,
+            'has_real_height': has_real_heights,
+            'height_source': height_sources,
+        },
+        geometry=geoms,
+        crs='EPSG:4326',
+    )
+    epsg = f"EPSG:326{utm_zone}" if utm_zone > 0 else f"EPSG:327{abs(utm_zone)}"
+    gdf_utm = gdf.to_crs(epsg).explode(index_parts=False).reset_index(drop=True)
+    if city_config['settings']['default_height'] == 0:
+        gdf_utm = gdf_utm[gdf_utm['has_real_height']].copy()
+
+    real_count = int(gdf_utm['has_real_height'].sum())
+    print(
+        f" Processed {len(gdf_utm)} Atlas buildings "
+        f"({real_count} with non-default heights)"
+    )
+    return gdf_utm
+
+
 def fetch_buildings_wfs(bbox, utm_zone):
     """Fetch buildings from Global Building Atlas via WFS (only requested area, not full dataset)"""
     if not WFS_AVAILABLE or not GEOPANDAS_AVAILABLE:
@@ -412,8 +630,8 @@ def fetch_buildings_wfs(bbox, utm_zone):
 
     # Get WFS configuration
     wfs_config = city_config.get('global_building_atlas', {})
-    wfs_url = wfs_config.get('wfs_url', 'https://tubvsig-so2sat-vm1.srv.mwn.de/geoserver/ows')
-    layer_name = wfs_config.get('layer_name', 'gba:GBA_Polygon')
+    wfs_url = wfs_config.get('wfs_url', 'https://tubvsig-so2sat-vm1.srv.mwn.de/geoserver/global3D/wfs')
+    layer_name = wfs_config.get('layer_name', 'global3D:lod1_global')
     height_field = wfs_config.get('height_field', 'height')
     wfs_crs = wfs_config.get('crs', 'EPSG:3857')  # GBA uses EPSG:3857
 
@@ -429,8 +647,14 @@ def fetch_buildings_wfs(bbox, utm_zone):
             # Check if layer exists
             if layer_name not in wfs.contents:
                 print(f" Layer '{layer_name}' not found. Trying alternative layer names...")
-                # Try common alternatives
-                alternatives = [k for k in wfs.contents.keys() if 'polygon' in k.lower() or 'building' in k.lower()]
+                # Prefer the current global LoD1 layer, then try descriptive names.
+                preferred_layers = ['global3D:lod1_global']
+                alternatives = [k for k in preferred_layers if k in wfs.contents]
+                alternatives.extend(
+                    k for k in wfs.contents.keys()
+                    if k not in alternatives
+                    and any(token in k.lower() for token in ('lod1_global', 'polygon', 'building'))
+                )
                 if alternatives:
                     layer_name = alternatives[0]
                     print(f" Using layer: {layer_name}")
@@ -502,15 +726,18 @@ def fetch_buildings_wfs(bbox, utm_zone):
             if height_field is None:
                 print(f" No height field found. Available fields: {list(gdf.columns)}")
                 print(f" Using default height: {city_config['settings']['default_height']}m")
-                gdf['height'] = city_config['settings']['default_height']
+                raw_heights = pd.Series([np.nan] * len(gdf), index=gdf.index, dtype=float)
             else:
                 print(f" Using height field: {height_field}")
-                gdf['height'] = gdf[height_field]
+                raw_heights = pd.to_numeric(gdf[height_field], errors='coerce')
         else:
-            gdf['height'] = gdf[height_field]
+            raw_heights = pd.to_numeric(gdf[height_field], errors='coerce')
 
-        # Fill missing heights with default
-        gdf['height'] = gdf['height'].fillna(city_config['settings']['default_height'])
+        gdf['has_real_height'] = raw_heights.notna() & (raw_heights > 0)
+        gdf['height'] = raw_heights.where(
+            gdf['has_real_height'],
+            city_config['settings']['default_height']
+        )
 
         # Convert to UTM
         epsg = f"EPSG:326{utm_zone}" if utm_zone > 0 else f"EPSG:327{abs(utm_zone)}"
@@ -524,7 +751,7 @@ def fetch_buildings_wfs(bbox, utm_zone):
             gdf_utm = gdf_utm[gdf_utm['height'] > 0]
 
         # Keep only geometry and height columns
-        gdf_utm = gdf_utm[['geometry', 'height']]
+        gdf_utm = gdf_utm[['geometry', 'height', 'has_real_height']]
 
         print(f" Processed {len(gdf_utm)} valid buildings from Global Building Atlas")
 
@@ -552,7 +779,7 @@ def filter_circular_buildings(buildings_data, center_lat, center_lon, radius_m, 
     print(f" Center UTM: {center_utm}")
     print(f" UTM Zone: {epsg}")
 
-    if isinstance(buildings_data, gpd.GeoDataFrame):
+    if is_geodataframe(buildings_data):
         # GeoDataFrame mode
         print(f" Buildings CRS: {buildings_data.crs}")
         buildings_data['distance'] = buildings_data.geometry.centroid.distance(center_point)
@@ -572,7 +799,9 @@ def filter_circular_buildings(buildings_data, center_lat, center_lon, radius_m, 
             if distance <= radius_m:
                 filtered.append({
                     'geometry': geom_utm,
-                    'height': bldg['height']
+                    'height': bldg['height'],
+                    'has_real_height': bldg.get('has_real_height', True),
+                    'height_source': bldg.get('height_source', 'height'),
                 })
     
     count = len(filtered)
@@ -582,6 +811,58 @@ def filter_circular_buildings(buildings_data, center_lat, center_lon, radius_m, 
         return None
     
     return filtered, center_utm
+
+
+def get_height_coverage_stats(buildings_data):
+    """Summarize buildings with explicit height or floor-count data."""
+    total_count = len(buildings_data)
+    if total_count == 0:
+        return {
+            'total_count': 0,
+            'real_count': 0,
+            'default_count': 0,
+            'real_ratio': 0.0
+        }
+
+    if is_geodataframe(buildings_data):
+        if 'has_real_height' in buildings_data.columns:
+            real_count = int(buildings_data['has_real_height'].fillna(False).astype(bool).sum())
+        else:
+            real_count = total_count
+    else:
+        real_count = sum(1 for bldg in buildings_data if bldg.get('has_real_height', True))
+
+    default_count = total_count - real_count
+    real_ratio = real_count / total_count
+
+    return {
+        'total_count': total_count,
+        'real_count': real_count,
+        'default_count': default_count,
+        'real_ratio': real_ratio
+    }
+
+
+def fetch_buildings_for_location(sampled_lat, sampled_lon, utm_zone):
+    """Fetch buildings for one sampled location and report the actual data source used."""
+    requested_data_source = city_config['settings']['data_source']
+    radius = city_config['settings']['collection_radius_meters']
+    bbox = calculate_bbox_for_circle(sampled_lat, sampled_lon, radius)
+    print(f"   BBOX: {bbox}")
+
+    if requested_data_source == "overture_geopandas":
+        return fetch_buildings_geopandas(bbox, utm_zone), "overture_geopandas"
+
+    if requested_data_source == "global_building_atlas":
+        atlas_config = city_config.get('global_building_atlas', {})
+        backend = atlas_config.get('backend', 'parquet')
+        if backend == 'wfs':
+            buildings = fetch_buildings_wfs(bbox, utm_zone)
+        else:
+            buildings = fetch_buildings_atlas_parquet(bbox, utm_zone)
+        return buildings, "global_building_atlas"
+
+    return fetch_buildings_simple(bbox, utm_zone), "overture_simple"
 
 
 # ========================================
@@ -623,7 +904,7 @@ def transform_to_section_vii(buildings_data, center_utm):
     print(f" Scale factor: {scale_factor:.4f} (1:{1/scale_factor:.1f})")
     print(f" Buildings will be scaled: XY and Z (height) both scaled by {scale_factor:.4f}")
     
-    if isinstance(buildings_data, gpd.GeoDataFrame):
+    if is_geodataframe(buildings_data):
         # GeoDataFrame mode
         transformed = buildings_data.copy()
         transformed.geometry = transformed.translate(
@@ -669,7 +950,7 @@ def apply_rotation(buildings_data, safe_zone_center):
     angle_deg = np.random.uniform(0, 90)
     print(f" Applying rotation: {angle_deg:.2f}°")
     
-    if isinstance(buildings_data, gpd.GeoDataFrame):
+    if is_geodataframe(buildings_data):
         # GeoDataFrame mode
         rotated = buildings_data.copy()
         rotated.geometry = rotated.rotate(angle_deg, origin=safe_zone_center)
@@ -691,7 +972,7 @@ def extract_building_footprints(buildings_data):
     """Extract 2D building footprints as Polygon list for bottom plate holes"""
     footprints = []
     
-    if isinstance(buildings_data, gpd.GeoDataFrame):
+    if is_geodataframe(buildings_data):
         # GeoDataFrame mode
         for idx, row in buildings_data.iterrows():
             geom = row.geometry
@@ -760,7 +1041,7 @@ def buildings_to_3d_mesh(buildings_data):
     areas = []
     bounding_boxes = []
 
-    if isinstance(buildings_data, gpd.GeoDataFrame):
+    if is_geodataframe(buildings_data):
         # GeoDataFrame mode
         print(f" GeoDataFrame: {len(buildings_data)} rows")
         skipped_count = 0
@@ -1118,51 +1399,92 @@ def main():
     # 1. Create CFD domain walls
     create_cfd_walls()
     
-    # 2. Sample or use exact location
-    print("\n Determining location...")
-    sampled_lat, sampled_lon, city_name, utm_zone = sample_location_in_city(
-        force_lat=args.lat,
-        force_lon=args.lon,
-        force_utm_zone=args.utm_zone
-    )
-    print(f"   City/Source: {city_name}")
-    print(f"   Location: ({sampled_lat:.6f}, {sampled_lon:.6f})")
-    print(f"   UTM Zone: {utm_zone}")
-
-    # 3. Fetch building data
-    print("\n Fetching building data...")
     radius = city_config['settings']['collection_radius_meters']
-    data_source = city_config['settings']['data_source']
-    
-    bbox = calculate_bbox_for_circle(sampled_lat, sampled_lon, radius)
-    print(f"   BBOX: {bbox}")
+    min_real_height_ratio = float(city_config['settings'].get('min_real_height_ratio', 0.0))
+    min_building_count = int(city_config['settings'].get('min_building_count', 1))
+    exact_location_mode = is_exact_location_mode()
+    max_sampling_attempts = 1 if exact_location_mode else int(
+        city_config['settings'].get('max_sampling_attempts', 20)
+    )
+    sampled_lat = None
+    sampled_lon = None
+    city_name = None
+    utm_zone = None
+    data_source = None
+    buildings_circular = None
+    center_utm = None
+    height_stats = None
 
-    if data_source == "overture_geopandas":
-        buildings = fetch_buildings_geopandas(bbox, utm_zone)
-    elif data_source == "global_building_atlas":
-        buildings = fetch_buildings_wfs(bbox, utm_zone)
+    for attempt in range(1, max_sampling_attempts + 1):
+        # 2. Sample or use exact location
+        print(f"\n Determining location (attempt {attempt}/{max_sampling_attempts})...")
+        sampled_lat, sampled_lon, city_name, utm_zone = sample_location_in_city(
+            force_lat=args.lat,
+            force_lon=args.lon,
+            force_utm_zone=args.utm_zone
+        )
+        print(f"   City/Source: {city_name}")
+        print(f"   Location: ({sampled_lat:.6f}, {sampled_lon:.6f})")
+        print(f"   UTM Zone: {utm_zone}")
 
-        # Fallback to Overture Maps if Global Building Atlas fails
-        if buildings is None:
-            print("\n Global Building Atlas unavailable (server may be under maintenance)")
-            print(" Falling back to Overture Maps...")
-            buildings = fetch_buildings_geopandas(bbox, utm_zone)
-            if buildings is not None:
-                print(" Successfully fetched from Overture Maps (fallback)")
+        # 3. Fetch building data
+        print("\n Fetching building data...")
+        buildings, data_source = fetch_buildings_for_location(sampled_lat, sampled_lon, utm_zone)
+
+        if buildings is None or len(buildings) == 0:
+            if exact_location_mode:
+                print("\n No buildings found for the exact location. Try a different location or increase radius.")
+                sys.exit(1)
+            print("\n No buildings found. Resampling a new location...")
+            continue
+
+        # 4. Filter circular domain
+        result = filter_circular_buildings(buildings, sampled_lat, sampled_lon, radius, utm_zone)
+        if result is None:
+            if exact_location_mode:
+                print("\n No buildings within the circular domain for the exact location.")
+                sys.exit(1)
+            print("\n No buildings within circular domain. Resampling a new location...")
+            continue
+
+        buildings_circular, center_utm = result
+        height_stats = get_height_coverage_stats(buildings_circular)
+        print(
+            f" Height coverage inside sampled domain: "
+            f"{height_stats['real_count']}/{height_stats['total_count']} "
+            f"({height_stats['real_ratio']:.1%}) with non-default heights"
+        )
+
+        if height_stats['total_count'] < min_building_count:
+            print(
+                f" Building count below threshold "
+                f"({height_stats['total_count']} < {min_building_count})"
+            )
+            if exact_location_mode:
+                print(" Exact-location mode is enabled, so generation stops instead of resampling.")
+                sys.exit(1)
+            print(" Resampling a new location...")
+            continue
+
+        if height_stats['real_ratio'] < min_real_height_ratio:
+            print(
+                f" Height coverage below threshold "
+                f"({height_stats['real_ratio']:.1%} < {min_real_height_ratio:.1%})"
+            )
+            if exact_location_mode:
+                print(" Exact-location mode is enabled, so generation stops instead of resampling.")
+                sys.exit(1)
+            print(" Resampling a new location...")
+            continue
+
+        break
     else:
-        buildings = fetch_buildings_simple(bbox, utm_zone)
-    
-    if buildings is None or len(buildings) == 0:
-        print("\n No buildings found. Try different location or increase radius.")
+        print(
+            f"\n Failed to find a valid location after {max_sampling_attempts} attempts "
+            f"with at least {min_building_count} buildings and "
+            f"{min_real_height_ratio:.1%} real-height coverage."
+        )
         sys.exit(1)
-    
-    # 4. Filter circular domain
-    result = filter_circular_buildings(buildings, sampled_lat, sampled_lon, radius, utm_zone)
-    if result is None:
-        print("\n No buildings within circular domain.")
-        sys.exit(1)
-    
-    buildings_circular, center_utm = result
     
     # 5. Transform to section VII with safety margins
     print("\n Processing buildings...")
@@ -1220,6 +1542,11 @@ def main():
         "rotation_angle_deg": 0,  # gridGenerator should not rotate again (already rotated)
         "compass_rotation_deg": round(angle_deg, 2),  # Actual rotation applied (for reference)
         "data_source": data_source,
+        "min_building_count_required": min_building_count,
+        "min_real_height_ratio_required": min_real_height_ratio,
+        "real_height_building_count": height_stats['real_count'],
+        "default_height_building_count": height_stats['default_count'],
+        "real_height_ratio": round(height_stats['real_ratio'], 4),
         "building_count": len(positions),
         "building_positions": positions,  # Rotated positions
         "building_sizes": building_sizes,  # Rotated AABB sizes (for gridGenerator)
@@ -1254,6 +1581,7 @@ def main():
     print(f" City: {city_name}")
     print(f" Location: ({sampled_lat:.6f}, {sampled_lon:.6f})")
     print(f" Buildings: {len(positions)}")
+    print(f" Non-default height coverage: {height_stats['real_ratio']:.1%}")
     print(f" Rotation: {angle_deg:.2f}°")
     print(f" Output: ./{sample_id}/")
     print("=" * 60)

@@ -10,12 +10,13 @@ active_cities = ["Incheon_Songdo"]
 # Data source selection
 # "overture_simple" - Simple approach (OSMGenerator style)
 # "overture_geopandas" - GeoDataFrame approach (AtlasGenerator style, more stable)
-# "global_building_atlas" - Global Building Atlas via WFS (satellite-derived heights)
-#                            Note: Server may be under maintenance. Auto-fallback to Overture Maps enabled.
+# "global_building_atlas" - Global Building Atlas release Parquet (satellite-derived heights)
 #data_source = "overture_simple"
-data_source = "overture_geopandas"
-#data_source = "global_building_atlas"
+#data_source = "overture_geopandas"
+data_source = "global_building_atlas"
 
+# Pin the release so parallel samples do not repeatedly query the STAC catalog.
+overture_release = "2026-09-23.1"
 # Circular domain radius (meters)
 # This value × 2 = diameter of the urban area to collect
 # Example: 500m → diameter 1000m (1km × 1km circular area)
@@ -25,6 +26,20 @@ collection_radius_meters = 200
 # 0 = Exclude buildings without height data (flat ground)
 # Number = Use as default height in meters (e.g., 15.0)
 default_height = 2.0
+
+# Convert an explicit Overture floor count to height before using default_height.
+meters_per_floor = 3.5
+
+# Minimum share with explicit height or floor-count data; configured default height is excluded.
+# If random sampling is active and coverage is below this threshold, a new location is sampled.
+# In exact-location mode, generation stops instead of resampling.
+min_real_height_ratio = 0.7
+
+# Minimum number of building objects required inside the circular domain.
+min_building_count = 5
+
+# Number of random locations to try before failing the sample.
+max_sampling_attempts = 50
 
 # ==========================================
 # Exact Location Mode (Optional)
@@ -42,15 +57,14 @@ longitude = 126.641539
 description = "SONGDO"
 
 # ==========================================
-# Global Building Atlas WFS Configuration
+# Global Building Atlas Configuration
 # ==========================================
 [global_building_atlas]
-wfs_url = "https://tubvsig-so2sat-vm1.srv.mwn.de/geoserver/ows"
-# Possible layer names (check GetCapabilities for exact names):
-# - gba:GBA_Polygon (CC BY-NC 4.0 polygons with height)
-# - gba:GBA_ODbLPolygon (ODbL licensed polygons)
-# - gba:GBA_LoD1 (LoD1 3D models)
-layer_name = "gba:GBA_Polygon"
+backend = "parquet"
+parquet_base_url = "https://data.source.coop/tge-labs/globalbuildingatlas-lod1"
+wfs_url = "https://tubvsig-so2sat-vm1.srv.mwn.de/geoserver/global3D/wfs"
+# Current global LoD1 layer exposed by the WFS server.
+layer_name = "global3D:lod1_global"
 version = "2.0.0"
 # CRS: Global Building Atlas uses EPSG:3857 (Web Mercator)
 crs = "EPSG:3857"
