@@ -942,7 +942,7 @@ def transform_to_section_vii(buildings_data, center_utm):
                 'height': bldg['height'] * scale_factor
             })
     
-    return transformed, safe_zone_center
+    return transformed, safe_zone_center, scale_factor
 
 
 def apply_rotation(buildings_data, safe_zone_center):
@@ -1488,7 +1488,9 @@ def main():
     
     # 5. Transform to section VII with safety margins
     print("\n Processing buildings...")
-    buildings_transformed, safe_zone_center = transform_to_section_vii(buildings_circular, center_utm)
+    buildings_transformed, safe_zone_center, scale_factor = transform_to_section_vii(
+        buildings_circular, center_utm
+    )
     
     # 6. Apply rotation around safe zone center
     buildings_rotated, angle_deg = apply_rotation(buildings_transformed, safe_zone_center)
@@ -1539,6 +1541,13 @@ def main():
             "lon": round(sampled_lon, 6)
         },
         "collection_radius_m": radius,
+        "geometry_scaling": {
+            "cfd_units_per_meter": float(scale_factor),
+            "meters_per_cfd_unit": float(1.0 / scale_factor),
+            "applies_to": ["x", "y", "z"],
+            "source_collection_diameter_m": float(2 * radius),
+            "scaled_collection_diameter": float(2 * radius * scale_factor)
+        },
         "rotation_angle_deg": 0,  # gridGenerator should not rotate again (already rotated)
         "compass_rotation_deg": round(angle_deg, 2),  # Actual rotation applied (for reference)
         "data_source": data_source,
