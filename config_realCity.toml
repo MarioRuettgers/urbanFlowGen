@@ -12,8 +12,8 @@ active_cities = ["Incheon_Songdo"]
 # "overture_geopandas" - GeoDataFrame approach (AtlasGenerator style, more stable)
 # "global_building_atlas" - Global Building Atlas release Parquet (satellite-derived heights)
 #data_source = "overture_simple"
-#data_source = "overture_geopandas"
-data_source = "global_building_atlas"
+data_source = "overture_geopandas"
+#data_source = "global_building_atlas"
 
 # Pin the release so parallel samples do not repeatedly query the STAC catalog.
 overture_release = "2026-09-23.1"
